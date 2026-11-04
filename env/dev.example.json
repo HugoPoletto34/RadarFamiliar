@@ -1,0 +1,5 @@
+{
+  "FLAVOR": "dev",
+  "SUPABASE_URL": "http://10.0.2.2:54321",
+  "SUPABASE_PUBLISHABLE_KEY": "cole-aqui--a-publishable-key-do-supabase-local"
+}

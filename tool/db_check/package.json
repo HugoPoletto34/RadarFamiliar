@@ -1,0 +1,15 @@
+{
+  "name": "radar-familiar-db-check",
+  "private": true,
+  "type": "module",
+  "description": "Valida migrations e testes pgTAP no PGlite, sem Docker",
+  "scripts": {
+    "check": "node check.mjs ../.."
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.15",
+    "@electric-sql/pglite-pgtap": "0.0.16",
+    "@electric-sql/pglite-postgis": "0.2.15"
+  }
+}
+

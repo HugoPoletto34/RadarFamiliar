@@ -1,0 +1,2 @@
+-- Dados locais de desenvolvimento (aplicados em `supabase db reset`).
+-- Os usuários são criados pelo próprio app via login por código no e-mail.

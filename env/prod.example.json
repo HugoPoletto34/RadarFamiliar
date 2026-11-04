@@ -1,0 +1,5 @@
+{
+  "FLAVOR": "prod",
+  "SUPABASE_URL": "https://SEU-PROJETO.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "cole-aqui--a-publishable-key-do-projeto-supabase"
+}
