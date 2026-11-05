@@ -88,9 +88,23 @@ flutter run --flavor dev --dart-define-from-file=env/dev.json
 
 3. Entre com qualquer e-mail, pegue o código no Mailpit e confirme.
 
+Sem `--flavor`, o Flutter usa `dev` (`default-flavor` no `pubspec.yaml`). Sem `--dart-define-from-file`, o app abre uma tela avisando que falta a configuração.
+
 Produção: `env/prod.json` e `--flavor prod`. Ids: `br.com.radarfamiliar` (prod) e `br.com.radarfamiliar.dev` (dev).
 
 **iOS:** os flavors ainda não têm schemes no Xcode. Até criá-los num Mac, rode no iOS sem `--flavor`, passando `--dart-define-from-file=env/dev.json`.
+
+## Rodar no Android Studio
+
+1. Abra a pasta raiz `c:\Projetos\RadarFamiliar` (não a pasta `android/`), com os plugins Flutter e Dart instalados.
+2. No seletor de execução, escolha **Radar Familiar (dev)**. Ela vem da pasta `.run/` do repositório e já define:
+   - Build flavor: `dev`
+   - Additional run args: `--dart-define-from-file=env/dev.json`
+3. Escolha o emulador ou o celular e clique em Run.
+
+Se preferir criar a configuração na mão: Run → Edit Configurations → + → Flutter. Em "Dart entrypoint", escolha `lib/main.dart`. Em "Build flavor", coloque `dev`. Em "Additional run args", coloque `--dart-define-from-file=env/dev.json`.
+
+O aviso "Your app uses the following plugins that apply Kotlin Gradle Plugin (KGP): firebase_core" é só um aviso: o build funciona. Ele some quando o projeto passar a usar o Built-in Kotlin, que exige Flutter 3.47 ou mais recente (`flutter upgrade`, depois `android.builtInKotlin=true` em `android/gradle.properties`).
 
 ## Push (Firebase, só FCM)
 
