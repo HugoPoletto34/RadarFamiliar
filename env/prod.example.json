@@ -1,5 +1,6 @@
 {
   "FLAVOR": "prod",
   "SUPABASE_URL": "https://SEU-PROJETO.supabase.co",
-  "SUPABASE_PUBLISHABLE_KEY": "cole-aqui--a-publishable-key-do-projeto-supabase"
+  "SUPABASE_PUBLISHABLE_KEY": "cole-aqui--a-publishable-key-do-projeto-supabase",
+  "GOOGLE_MAPS_API_KEY": ""
 }

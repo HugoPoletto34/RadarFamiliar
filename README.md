@@ -94,6 +94,30 @@ Produção: `env/prod.json` e `--flavor prod`. Ids: `br.com.radarfamiliar` (prod
 
 **iOS:** os flavors ainda não têm schemes no Xcode. Até criá-los num Mac, rode no iOS sem `--flavor`, passando `--dart-define-from-file=env/dev.json`.
 
+## Protótipo local
+
+Um fluxo mínimo para testar no emulador com o Supabase local: mapa, amigos e compartilhamento por tempo limitado.
+
+1. Rode `supabase db reset`. Ele carrega `supabase/seed.sql`, que cria as funções `proto_*` e `dev_*` do protótipo. Elas só existem no banco local e não vão para a nuvem.
+2. Em `env/dev.json`, `GOOGLE_MAPS_API_KEY` é opcional:
+   - Com a chave (Maps SDK for Android, criada no Google Cloud, exige conta de faturamento), o app usa o Google Maps.
+   - Vazia, o app usa o OpenStreetMap (flutter_map). Isso serve para desenvolvimento, mas não para produção (política de uso dos tiles do OSM).
+3. Defina a posição do emulador: `adb emu geo fix -46.6388 -23.5489` (longitude primeiro). Também dá para usar Extended controls → Location.
+4. Rode o app, entre com o código do Mailpit e permita a localização.
+5. Use o app:
+   - O mapa mostra o seu marcador "Eu".
+   - Em **Amigos** (ícone no topo), toque em **Adicionar amigo simulado** (Ana, Bruno, Carla…). Os amigos simulados aparecem perto de você, já compartilhando, e se movem um pouco a cada atualização (5 s).
+   - O botão ao lado de cada amigo simula ele parar ou voltar a compartilhar.
+   - Em **Compartilhar**, escolha 15 minutos, 1 hora ou até desligar. Enquanto estiver ligado, o app envia a posição pelo `ingest_location` (no máximo a cada 20 s). No grupo "Amigos", criado automaticamente, só vê os outros quem também está compartilhando. Por isso, desligado, o mapa mostra "Compartilhe para ver N amigo(s)".
+   - Toque num marcador para ver nome, horário e bateria. Toque num amigo da lista para centralizar nele.
+
+O botão de amigo simulado só aparece no flavor `dev`.
+
+**Estilo do mapa:** o mapa é só fundo, então fica com pouca cor e pouco texto, para os marcadores (círculo com a inicial) serem o destaque.
+- Google Maps: `assets/map_style.json` remove POIs, transporte público e nomes de rua (fica só o nome das vias principais), e usa cinza claro com água e parques suaves. Prédios 3D, trânsito, bússola e botões nativos ficam desligados. Para ajustar, gere outro JSON em [mapstyle.withgoogle.com](https://mapstyle.withgoogle.com) e substitua o arquivo.
+- OpenStreetMap (sem chave): os tiles não aceitam estilo, então o app aplica um filtro de tons de cinza clareado (`_minimalFilter` em `osm_radar_map.dart`), que apaga as cores e os textos.
+- Sobre o mapa ficam só um aviso curto de status, o botão de compartilhar e o de "mostrar todos". A lista de amigos é compacta: avatar, nome e uma linha curta de status.
+
 ## Rodar no Android Studio
 
 1. Abra a pasta raiz `c:\Projetos\RadarFamiliar` (não a pasta `android/`), com os plugins Flutter e Dart instalados.

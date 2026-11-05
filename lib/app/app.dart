@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/config/env.dart';
 import '../features/auth/sign_in_page.dart';
-import '../features/home/home_page.dart';
+import '../features/radar/map_page.dart';
 
 class RadarFamiliarApp extends StatelessWidget {
   const RadarFamiliarApp({super.key});
@@ -30,7 +30,7 @@ class _AuthGate extends StatelessWidget {
     return StreamBuilder<AuthState>(
       stream: auth.onAuthStateChange,
       builder: (context, _) =>
-          auth.currentSession == null ? const SignInPage() : const HomePage(),
+          auth.currentSession == null ? const SignInPage() : const MapPage(),
     );
   }
 }

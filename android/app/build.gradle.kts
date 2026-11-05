@@ -17,6 +17,16 @@ val keystoreProperties = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
+// Chave do Google Maps SDK for Android: GOOGLE_MAPS_API_KEY em env/<flavor>.json (fora do git),
+// o mesmo arquivo passado em --dart-define-from-file. Sem chave, o app usa OpenStreetMap.
+@Suppress("UNCHECKED_CAST")
+fun mapsApiKey(flavor: String): String {
+    val f = rootProject.file("../env/$flavor.json")
+    if (!f.exists()) return "SEM_CHAVE"
+    val json = groovy.json.JsonSlurper().parse(f) as Map<String, Any?>
+    return (json["GOOGLE_MAPS_API_KEY"] as String?)?.takeIf { it.isNotBlank() } ?: "SEM_CHAVE"
+}
+
 android {
     namespace = "br.com.radarfamiliar"
     compileSdk = flutter.compileSdkVersion
@@ -46,10 +56,12 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             resValue("string", "app_name", "Radar Familiar Dev")
+            manifestPlaceholders["mapsApiKey"] = mapsApiKey("dev")
         }
         create("prod") {
             dimension = "env"
             resValue("string", "app_name", "Radar Familiar")
+            manifestPlaceholders["mapsApiKey"] = mapsApiKey("prod")
         }
     }
 
