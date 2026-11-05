@@ -69,10 +69,13 @@ Aplica as migrations num Postgres 17 em WebAssembly (PGlite, com PostGIS, pgcryp
 ```powershell
 supabase login
 supabase link --project-ref <ref-do-projeto>
+supabase db push --dry-run
 supabase db push
 ```
 
-No painel: Authentication → Email → mantenha o login por e-mail e coloque `{{ .Token }}` nos templates "Magic Link" e "Confirm signup" (igual a `supabase/templates/otp.html`).
+`db push` sobe só as migrations. O `seed.sql` (funções `proto_*` e `dev_*` do protótipo) fica só no banco local: nunca use `--include-seed`.
+
+O passo a passo completo está em [docs/codemagic.md](docs/codemagic.md): criar o projeto, chaves, templates `{{ .Token }}`, SMTP e a pendência das RPCs do protótipo.
 
 ## Rodar o app
 
@@ -92,7 +95,11 @@ Sem `--flavor`, o Flutter usa `dev` (`default-flavor` no `pubspec.yaml`). Sem `-
 
 Produção: `env/prod.json` e `--flavor prod`. Ids: `br.com.radarfamiliar` (prod) e `br.com.radarfamiliar.dev` (dev).
 
-**iOS:** os flavors ainda não têm schemes no Xcode. Até criá-los num Mac, rode no iOS sem `--flavor`, passando `--dart-define-from-file=env/dev.json`.
+**iOS:** os schemes `dev` e `prod` existem no Xcode (`Debug/Release/Profile-<flavor>`), então `--flavor dev|prod` também vale no iOS. A chave do Google Maps no iOS vem de `ios/Flutter/Secrets.xcconfig` (fora do git), com uma linha `GOOGLE_MAPS_API_KEY=...`. Sem o arquivo, o app usa o OpenStreetMap.
+
+## Publicação (Codemagic)
+
+Build e publicação (TestFlight e App Bundle do Play) ficam no `codemagic.yaml`, no mesmo modelo do ilover-mobile. Configuração, variáveis e a ordem dos passos: [docs/codemagic.md](docs/codemagic.md).
 
 ## Protótipo local
 

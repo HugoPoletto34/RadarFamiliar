@@ -1,0 +1,187 @@
+# CI/CD do Radar Familiar no Codemagic, a partir do codemagic.yaml do ilover-mobile.
+# Passo a passo de configuração (Apple, Google Play, Supabase, variáveis): docs/codemagic.md.
+#
+# Só o flavor prod é publicado: o dev aponta para o Supabase local (10.0.2.2) e
+# só faz sentido no emulador.
+
+definitions:
+  scripts:
+    - &write_env_prod
+      name: Gerar env/prod.json e ios/Flutter/Secrets.xcconfig
+      script: bash scripts/ci/write_env.sh prod
+    - &pub_get
+      name: flutter pub get
+      script: flutter pub get
+
+workflows:
+  checks:
+    name: Checagens (analyze + test)
+    instance_type: linux_x2
+    max_build_duration: 20
+    environment:
+      flutter: stable
+    triggering:
+      events:
+        - push
+        - pull_request
+      cancel_previous_builds: true
+    scripts:
+      - *pub_get
+      - name: flutter analyze
+        script: flutter analyze
+      - name: flutter test
+        script: flutter test
+
+  android-prod:
+    name: Android prod (App Bundle)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      java: 17
+      # Keystore de upload em Team settings > Code signing identities > Android keystores.
+      android_signing:
+        - radar_upload
+      # Grupo com SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, GOOGLE_MAPS_API_KEY
+      # e (quando o app existir no Play Console) GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS.
+      groups:
+        - radar_prod
+      vars:
+        PACKAGE_NAME: "br.com.radarfamiliar"
+        IS_BETA: "false"
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "v*"
+    scripts:
+      - *write_env_prod
+      - name: Assinatura Android
+        script: bash scripts/ci/android_signing.sh
+      - *pub_get
+      - name: Calcular versionCode/versionName
+        script: |
+          source scripts/ci/version_helpers.sh
+
+          PUBSPEC_BUILD=$(get_pubspec_build)
+          CM_BUILD=$(as_int "${BUILD_NUMBER:-0}")
+          GOOGLE_PLAY_BUILD=0
+          if [ -n "${GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS:-}" ]; then
+            GOOGLE_PLAY_BUILD=$(as_int "$(google-play get-latest-build-number --package-name "$PACKAGE_NAME" || true)")
+          fi
+
+          LATEST_BUILD_NUMBER=$(max_int "$GOOGLE_PLAY_BUILD" "$PUBSPEC_BUILD" "$CM_BUILD")
+          NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          validate_build_number "$NEW_BUILD_NUMBER" "$LATEST_BUILD_NUMBER"
+          NEW_BUILD_NAME=$(build_name_for "$NEW_BUILD_NUMBER" "$IS_BETA")
+
+          echo "Android $NEW_BUILD_NAME+$NEW_BUILD_NUMBER (google_play=$GOOGLE_PLAY_BUILD pubspec=$PUBSPEC_BUILD codemagic=$CM_BUILD)"
+          echo "NEW_BUILD_NAME=$NEW_BUILD_NAME" >> "$CM_ENV"
+          echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> "$CM_ENV"
+      - name: Build App Bundle
+        script: |
+          flutter build appbundle --release --flavor prod \
+            --dart-define-from-file=env/prod.json \
+            --build-name="$NEW_BUILD_NAME" \
+            --build-number="$NEW_BUILD_NUMBER"
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/mapping.txt
+    publishing:
+      # Ligar depois do primeiro upload manual do .aab no Play Console
+      # (a API do Play não cria o app).
+      # google_play:
+      #   credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal
+      #   submit_as_draft: true
+      email:
+        recipients:
+          - hugopoletto34@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  ios-prod:
+    name: iOS prod (TestFlight)
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    # Nome da API key em Team settings > Integrations > Developer Portal.
+    # A do ilover ("apple_key") serve se o app estiver no mesmo time Apple.
+    integrations:
+      app_store_connect: apple_key
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: br.com.radarfamiliar
+      groups:
+        - radar_prod
+      vars:
+        IS_BETA: "false"
+        BUNDLE_ID: "br.com.radarfamiliar"
+        # Apple ID numérico do app (App Store Connect > App Information > Apple ID),
+        # não o bundle id. Vazio: o script tenta descobrir pelo bundle id.
+        IOS_APPLE_ID: ""
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "v*"
+    scripts:
+      - name: Keychain
+        script: keychain initialize
+      - name: Certificados
+        script: keychain add-certificates
+      - *write_env_prod
+      - *pub_get
+      - name: CocoaPods
+        script: cd ios && pod install --repo-update
+      - name: Perfis de provisionamento
+        script: xcode-project use-profiles
+      - name: Flutter build IPA
+        script: |
+          source scripts/ci/version_helpers.sh
+
+          PUBSPEC_BUILD=$(get_pubspec_build)
+          CM_BUILD=$(as_int "${BUILD_NUMBER:-0}")
+
+          APPLE_ID="${IOS_APPLE_ID:-}"
+          if [ -z "$APPLE_ID" ]; then
+            APPLE_ID=$(resolve_apple_id "$BUNDLE_ID")
+          fi
+          if [ -z "$APPLE_ID" ]; then
+            echo "AVISO: Apple ID de \"$BUNDLE_ID\" nao encontrado (configure IOS_APPLE_ID)." >&2
+            TF_BUILD=0
+            AS_BUILD=0
+          else
+            TF_BUILD=$(as_int "$(app-store-connect get-latest-testflight-build-number "$APPLE_ID" --platform IOS --all-versions || true)")
+            AS_BUILD=$(as_int "$(app-store-connect get-latest-app-store-build-number "$APPLE_ID" --platform IOS || true)")
+          fi
+
+          LATEST_BUILD_NUMBER=$(max_int "$TF_BUILD" "$AS_BUILD" "$PUBSPEC_BUILD" "$CM_BUILD")
+          NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          validate_build_number "$NEW_BUILD_NUMBER" "$LATEST_BUILD_NUMBER"
+          NEW_BUILD_NAME=$(build_name_for "$NEW_BUILD_NUMBER" "$IS_BETA")
+
+          echo "iOS $NEW_BUILD_NAME+$NEW_BUILD_NUMBER (testflight=$TF_BUILD appstore=$AS_BUILD pubspec=$PUBSPEC_BUILD codemagic=$CM_BUILD)"
+
+          flutter build ipa --release --flavor prod \
+            --dart-define-from-file=env/prod.json \
+            --build-name="$NEW_BUILD_NAME" \
+            --build-number="$NEW_BUILD_NUMBER" \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+      email:
+        recipients:
+          - hugopoletto34@gmail.com
+        notify:
+          success: true
+          failure: true

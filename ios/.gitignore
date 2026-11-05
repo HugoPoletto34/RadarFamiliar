@@ -32,3 +32,6 @@ Runner/GeneratedPluginRegistrant.*
 !default.mode2v3
 !default.pbxuser
 !default.perspectivev3
+
+# Chave do Google Maps (gerada por scripts/ci/write_env.sh)
+Flutter/Secrets.xcconfig
