@@ -75,7 +75,7 @@ supabase db push
 
 `db push` sobe só as migrations. O `seed.sql` (funções `proto_*` e `dev_*` do protótipo) fica só no banco local: nunca use `--include-seed`.
 
-O passo a passo completo está em [docs/codemagic.md](docs/codemagic.md): criar o projeto, chaves, templates `{{ .Token }}`, SMTP e a pendência das RPCs do protótipo.
+Passos curtos depois de criar o projeto: [docs/supabase-prod.md](docs/supabase-prod.md). O passo a passo completo está em [docs/codemagic.md](docs/codemagic.md): criar o projeto, chaves, templates `{{ .Token }}`, SMTP e a pendência das RPCs do protótipo.
 
 ## Rodar o app
 
