@@ -121,9 +121,7 @@ workflows:
       vars:
         IS_BETA: "false"
         BUNDLE_ID: "br.com.radarfamiliar"
-        # Apple ID numérico do app (App Store Connect > App Information > Apple ID),
-        # não o bundle id. Vazio: o script tenta descobrir pelo bundle id.
-        IOS_APPLE_ID: ""
+        IOS_APPLE_ID: "6831807632"
     triggering:
       events:
         - tag
