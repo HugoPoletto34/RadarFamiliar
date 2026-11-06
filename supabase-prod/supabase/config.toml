@@ -30,7 +30,7 @@ host = "smtp.resend.com"
 port = 465
 user = "resend"
 pass = "env(SUPABASE_AUTH_SMTP_PASS)"
-admin_email = "nao-responda@SEU-DOMINIO"
+admin_email = "onboarding@resend.dev"
 sender_name = "Radar Familiar"
 
 [auth.email.template.magic_link]
