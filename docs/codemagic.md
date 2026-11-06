@@ -42,9 +42,9 @@ Na raiz do repositório:
 ```powershell
 supabase login
 supabase link --project-ref <project-ref>   # pede a senha do banco
-supabase db push --dry-run                  # lista as migrations que vão subir
-supabase db push
-supabase migration list                     # local e remoto devem bater
+supabase db push --remote --dry-run                # lista as migrations que vão subir
+supabase db push --remote
+supabase migration list --remote            # local e remoto devem bater
 ```
 
 `supabase db push` envia só `supabase/migrations/*.sql` (schema, RLS e RPCs). Ele **não** roda `supabase/seed.sql`. Nunca use `--include-seed` neste projeto: o seed cria as funções do protótipo `proto_*` e `dev_*` (incluindo amigos falsos em `auth.users`), que são só para o banco local.

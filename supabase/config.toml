@@ -246,12 +246,12 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 [auth.email.template.magic_link]
-subject = "Seu c�digo do Radar Familiar"
-content_path = "./supabase/templates/otp.html"
+subject = "Seu código do Radar Familiar"
+content_path = "supabase/templates/otp.html"
 
 [auth.email.template.confirmation]
-subject = "Seu c�digo do Radar Familiar"
-content_path = "./supabase/templates/otp.html"
+subject = "Seu código do Radar Familiar"
+content_path = "supabase/templates/otp.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
@@ -390,8 +390,8 @@ allow_dynamic_registration = false
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
-# `per_worker` (default) — enables hot reload during local development.
-# `oneshot` — fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
+# `per_worker` (default) â€” enables hot reload during local development.
+# `oneshot` â€” fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
 policy = "per_worker"
 # Port to attach the Chrome inspector for debugging edge functions.
 inspector_port = 8083

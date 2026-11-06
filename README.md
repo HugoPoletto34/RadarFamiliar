@@ -69,8 +69,8 @@ Aplica as migrations num Postgres 17 em WebAssembly (PGlite, com PostGIS, pgcryp
 ```powershell
 supabase login
 supabase link --project-ref <ref-do-projeto>
-supabase db push --dry-run
-supabase db push
+supabase db push --remote --dry-run
+supabase db push --remote
 ```
 
 `db push` sobe só as migrations. O `seed.sql` (funções `proto_*` e `dev_*` do protótipo) fica só no banco local: nunca use `--include-seed`.

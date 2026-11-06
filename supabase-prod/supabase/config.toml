@@ -1,0 +1,39 @@
+# Configuração do Auth do projeto Supabase de produção, aplicada com:
+#   supabase config diff --workdir supabase-prod --remote=<ref>
+#   supabase config push --workdir supabase-prod --remote=<ref>
+#
+# O `config push` só altera o que este arquivo declara. Não use o
+# supabase/config.toml da raiz contra a nuvem: ele tem valores do ambiente
+# local (site_url em 127.0.0.1, confirmação de e-mail e MFA desligados,
+# URLs do flavor dev).
+project_id = "radar-familiar"
+
+[auth]
+additional_redirect_urls = ["br.com.radarfamiliar://login-callback"]
+
+[auth.email]
+enable_confirmations = true
+otp_length = 6
+otp_expiry = 3600
+
+# No plano Free, o Supabase só aceita templates próprios com SMTP próprio
+# (docs/supabase-prod.md). A senha vem do ambiente: $env:SUPABASE_AUTH_SMTP_PASS
+# na sessão do PowerShell ou supabase-prod/supabase/.env (fora do git).
+# Descomente depois de verificar o domínio no provedor. Exemplo com Resend;
+# no Brevo: host "smtp-relay.brevo.com", port 587, user = login SMTP do Brevo.
+# [auth.email.smtp]
+# enabled = true
+# host = "smtp.resend.com"
+# port = 465
+# user = "resend"
+# pass = "env(SUPABASE_AUTH_SMTP_PASS)"
+# admin_email = "nao-responda@SEU-DOMINIO"
+# sender_name = "Radar Familiar"
+
+[auth.email.template.magic_link]
+subject = "Seu código do Radar Familiar"
+content_path = "./supabase/templates/otp.html"
+
+[auth.email.template.confirmation]
+subject = "Seu código do Radar Familiar"
+content_path = "./supabase/templates/otp.html"

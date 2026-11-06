@@ -50,6 +50,8 @@ app.*.map.json
 supabase/.branches/
 supabase/.temp/
 supabase/.env
+supabase-prod/supabase/.env
+supabase-prod/supabase/.temp/
 node_modules/
 
 # Android Studio will place build artifacts here
