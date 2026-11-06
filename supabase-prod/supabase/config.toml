@@ -16,19 +16,22 @@ enable_confirmations = true
 otp_length = 6
 otp_expiry = 3600
 
-# No plano Free, o Supabase só aceita templates próprios com SMTP próprio
-# (docs/supabase-prod.md). A senha vem do ambiente: $env:SUPABASE_AUTH_SMTP_PASS
-# na sessão do PowerShell ou supabase-prod/supabase/.env (fora do git).
-# Descomente depois de verificar o domínio no provedor. Exemplo com Resend;
-# no Brevo: host "smtp-relay.brevo.com", port 587, user = login SMTP do Brevo.
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.resend.com"
-# port = 465
-# user = "resend"
-# pass = "env(SUPABASE_AUTH_SMTP_PASS)"
-# admin_email = "nao-responda@SEU-DOMINIO"
-# sender_name = "Radar Familiar"
+# No plano Free, o Supabase só aceita templates próprios com SMTP próprio.
+# Aplique com scripts/supabase/push-prod-auth.ps1 (docs/supabase-prod.md), que
+# confere a senha e o remetente antes do push.
+#
+# pass: a CLI troca env(NOME) pelo valor da variável NOME do ambiente. Se ela
+# não existir, envia vazio e a API responde 401 "Missing SMTP_PASS".
+# admin_email: remetente de um domínio verificado no provedor (não @gmail.com).
+# Brevo: host "smtp-relay.brevo.com", port 587, user = login SMTP do Brevo.
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(SUPABASE_AUTH_SMTP_PASS)"
+admin_email = "nao-responda@SEU-DOMINIO"
+sender_name = "Radar Familiar"
 
 [auth.email.template.magic_link]
 subject = "Seu código do Radar Familiar"
