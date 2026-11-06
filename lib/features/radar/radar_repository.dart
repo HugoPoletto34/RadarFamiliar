@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'member_location.dart';
 
-/// Chamadas ao Supabase do protótipo local. As RPCs `proto_*` e `dev_*`
+/// Chamadas ao Supabase do radar. As RPCs `dev_*` (amigos simulados)
 /// existem só no banco local (supabase/seed.sql).
 class RadarRepository {
   RadarRepository(this._client);

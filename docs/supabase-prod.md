@@ -7,7 +7,7 @@ Projeto `radar-familiar` (ref `xccwmeuubelmopifwtpk`, região São Paulo). O con
 | Item | Situação |
 | --- | --- |
 | `supabase link` | feito |
-| Migrations (`supabase db push --remote`) | as 3 aplicadas, sem seed |
+| Migrations (`supabase db push --remote`) | as 4 aplicadas, sem seed (a 4ª traz `proto_ensure_group` e `proto_set_sharing`) |
 | OTP de 6 dígitos e redirect `br.com.radarfamiliar://login-callback` | aplicados com `config push` |
 | SMTP próprio | **falta** |
 | Templates com o código (`{{ .Token }}`) | **falta**: depende do SMTP |
@@ -36,7 +36,7 @@ supabase migration list --remote        # colunas local e remote iguais
 
 Na CLI 3.x, os comandos de banco apontam para o Supabase **local** por padrão. Para mirar a nuvem, passe `--remote`.
 
-**Nunca rode o seed em produção:** não use `--include-seed` nem `supabase db reset --remote`, que apaga o banco. O `supabase/seed.sql` cria as funções do protótipo (`proto_*`, `dev_*`) e amigos falsos em `auth.users`, e é só para o banco local.
+**Nunca rode o seed em produção:** não use `--include-seed` nem `supabase db reset --remote`, que apaga o banco. O `supabase/seed.sql` cria as funções de amigos simulados (`dev_*`), que inserem usuários falsos em `auth.users`, e é só para o banco local. As funções `proto_ensure_group` e `proto_set_sharing`, que o app usa ao abrir o mapa, estão na migration `20261105100004_proto_production.sql`.
 
 ## 3. Auth: por que o template não aparece
 
@@ -153,4 +153,4 @@ flutter run --flavor prod --dart-define-from-file=env/prod.json
 
 O `env/prod.json` fica fora do git. No Codemagic, os mesmos valores vão no grupo `radar_prod`.
 
-O app ainda chama as RPCs do protótipo `proto_ensure_group` e `proto_set_sharing`, que só existem no seed local. Contra a nuvem, o login funciona (depois dos templates), mas o mapa mostra erro até essas funções virarem migration (ver [codemagic.md](codemagic.md), seção 1.5).
+As RPCs que o app chama ao abrir o mapa (`proto_ensure_group`, `proto_set_sharing`, `get_group_locations`, `ingest_location`) estão todas nas migrations. Se aparecer `PGRST202 ... not in schema cache`, confira com `supabase migration list --remote=<ref>` se a última migration subiu.

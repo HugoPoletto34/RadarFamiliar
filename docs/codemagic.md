@@ -47,7 +47,7 @@ supabase db push --remote
 supabase migration list --remote            # local e remoto devem bater
 ```
 
-`supabase db push` envia só `supabase/migrations/*.sql` (schema, RLS e RPCs). Ele **não** roda `supabase/seed.sql`. Nunca use `--include-seed` neste projeto: o seed cria as funções do protótipo `proto_*` e `dev_*` (incluindo amigos falsos em `auth.users`), que são só para o banco local.
+`supabase db push` envia só `supabase/migrations/*.sql` (schema, RLS e RPCs). Ele **não** roda `supabase/seed.sql`. Nunca use `--include-seed` neste projeto: o seed cria as funções `dev_*` (amigos falsos em `auth.users`), que são só para o banco local.
 
 ### 1.3 Auth por código de e-mail
 
@@ -81,7 +81,7 @@ No Codemagic, os mesmos valores ficam no grupo `radar_prod` (seção 2). O `scri
 
 ### 1.5 Antes da primeira build de produção: RPCs do protótipo
 
-O app atual chama `proto_ensure_group` e `proto_set_sharing`, que existem só no `seed.sql`. Contra a nuvem, o mapa mostra erro logo ao abrir. Antes de mandar para testadores, essas duas funções (criar o grupo e ligar/desligar o compartilhamento) precisam virar uma migration de verdade, com nome definitivo e testes. As funções `dev_*` (amigos simulados) continuam só no seed, e os botões delas só aparecem no flavor `dev`.
+Resolvido: `proto_ensure_group` e `proto_set_sharing` foram para a migration `20261105100004_proto_production.sql` e estão no projeto da nuvem. Os nomes ainda são do protótipo: quando existirem convites e vários grupos, troque por RPCs definitivas e cubra-as com testes. As funções `dev_*` (amigos simulados) continuam só no seed, e os botões delas só aparecem no flavor `dev`.
 
 ## 2. Repositório e Codemagic
 

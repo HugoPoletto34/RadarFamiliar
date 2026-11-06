@@ -73,7 +73,7 @@ supabase db push --remote --dry-run
 supabase db push --remote
 ```
 
-`db push` sobe só as migrations. O `seed.sql` (funções `proto_*` e `dev_*` do protótipo) fica só no banco local: nunca use `--include-seed`.
+`db push` sobe só as migrations. O `seed.sql` (funções `dev_*` dos amigos simulados) fica só no banco local: nunca use `--include-seed`.
 
 Passos curtos depois de criar o projeto: [docs/supabase-prod.md](docs/supabase-prod.md). O passo a passo completo está em [docs/codemagic.md](docs/codemagic.md): criar o projeto, chaves, templates `{{ .Token }}`, SMTP e a pendência das RPCs do protótipo.
 
@@ -105,7 +105,7 @@ Build e publicação (TestFlight e App Bundle do Play) ficam no `codemagic.yaml`
 
 Um fluxo mínimo para testar no emulador com o Supabase local: mapa, amigos e compartilhamento por tempo limitado.
 
-1. Rode `supabase db reset`. Ele carrega `supabase/seed.sql`, que cria as funções `proto_*` e `dev_*` do protótipo. Elas só existem no banco local e não vão para a nuvem.
+1. Rode `supabase db reset`. Ele carrega `supabase/seed.sql`, que cria as funções `dev_*` dos amigos simulados. Elas só existem no banco local e não vão para a nuvem. As funções `proto_*` (grupo "Amigos" e compartilhamento) estão nas migrations e existem também na nuvem.
 2. Em `env/dev.json`, `GOOGLE_MAPS_API_KEY` é opcional:
    - Com a chave (Maps SDK for Android, criada no Google Cloud, exige conta de faturamento), o app usa o Google Maps.
    - Vazia, o app usa o OpenStreetMap (flutter_map). Isso serve para desenvolvimento, mas não para produção (política de uso dos tiles do OSM).
