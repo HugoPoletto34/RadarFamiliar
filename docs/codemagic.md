@@ -5,8 +5,20 @@ O `codemagic.yaml` segue o modelo do `ilover-mobile`: as mesmas etapas de keycha
 | Workflow | Quando roda | O que faz |
 | --- | --- | --- |
 | `checks` | push e pull request | `flutter analyze` e `flutter test` (Linux) |
-| `android-prod` | tag `v*` ou manual | App Bundle `prod` assinado com o keystore de upload |
+| `android-prod` | tag `v*` ou manual | App Bundle `prod` assinado (só artefato; sem publicar no Play) |
 | `ios-prod` | tag `v*` ou manual | IPA `prod` assinado e enviado para o TestFlight |
+
+### `android-prod`: só build (sem Play)
+
+O workflow **Android prod (App Bundle)** (`android-prod`) gera o `.aab` assinado e publica apenas **artifacts** + notificação por e-mail. Não há etapa `google_play` nem upload para faixas do Play Console — build only até Hugo publicar manualmente.
+
+**Disparo manual:** no Codemagic, abra o app → **Start new build** → escolha o workflow **Android prod (App Bundle)** (`android-prod`).
+
+**Variáveis necessárias (grupo `radar_prod` + assinatura):** `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`; opcional `GOOGLE_MAPS_API_KEY`. Keystore Android no Codemagic com referência **`radar_upload`**. **Não** é preciso `GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS` para este workflow.
+
+**Baixar o AAB:** após build com sucesso, na página da build → **Artifacts** → baixe o arquivo em `build/.../outputs/.../*.aab` (e, se quiser, `mapping.txt` para desofuscação). Envie o `.aab` ao Play Console na faixa desejada.
+
+O `versionCode` vem do maior entre o build number do `pubspec.yaml` e o contador interno do Codemagic, mais 1; o `versionName` segue `MAJOR.MINOR` do pubspec + esse número (com `IS_BETA: "false"` no workflow).
 
 O flavor `dev` aponta para o Supabase local (`10.0.2.2`) e serve só no emulador. Por isso ele não tem workflow.
 
@@ -99,12 +111,11 @@ Resolvido: `proto_ensure_group` e `proto_set_sharing` foram para a migration `20
 | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
 | `SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` |
 | `GOOGLE_MAPS_API_KEY` | opcional (seção 5) |
-| `GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS` | opcional; JSON da service account do Play Console |
 
 6. No `codemagic.yaml`, preencha `IOS_APPLE_ID` com o Apple ID numérico do app, depois de criá-lo no App Store Connect.
 7. Para disparar: `git tag v1.0.0 && git push origin v1.0.0`, ou **Start new build** no painel.
 
-O build number é sempre o maior entre loja, `pubspec.yaml` e contador do Codemagic, mais 1. O build name é `MAJOR.MINOR` do `pubspec.yaml` mais esse número (por exemplo `1.0.7`). Com `IS_BETA: "true"`, fica `1.0.7-beta`, como no ilover.
+No **Android**, o build number é o maior entre `pubspec.yaml` e o contador do Codemagic, mais 1 (sem consultar o Play). No **iOS**, entram também TestFlight e App Store. O build name é `MAJOR.MINOR` do `pubspec.yaml` mais esse número (por exemplo `1.0.7`). Com `IS_BETA: "true"`, fica `1.0.7-beta`, como no ilover.
 
 ## 3. Apple (App Store / TestFlight)
 
@@ -138,9 +149,8 @@ keyAlias=upload
 keyPassword=...
 ```
 
-4. No Play Console, crie o app `br.com.radarfamiliar` e suba **à mão** o primeiro `.aab` do artifact `android-prod` na faixa de teste interno. A API do Play não cria apps.
-5. Para publicar direto pelo Codemagic: crie uma service account com acesso ao app, salve o JSON em `GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS` e descomente `google_play:` no `codemagic.yaml`.
-6. No Play Console, preencha também a Segurança de dados (localização precisa, e-mail) e a declaração de permissão de localização.
+4. No Play Console, crie o app `br.com.radarfamiliar` e suba **à mão** o `.aab` baixado dos artifacts do workflow `android-prod` na faixa desejada (por exemplo teste interno). A API do Play não cria apps; o Codemagic hoje **não** publica no Play (só gera o bundle).
+5. No Play Console, preencha também a Segurança de dados (localização precisa, e-mail) e a declaração de permissão de localização.
 
 ## 5. Opcionais
 

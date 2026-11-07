@@ -42,12 +42,11 @@ workflows:
       # Keystore de upload em Team settings > Code signing identities > Android keystores.
       android_signing:
         - radar_upload
-      # Grupo com SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, GOOGLE_MAPS_API_KEY
-      # e (quando o app existir no Play Console) GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS.
+      # Grupo com SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, GOOGLE_MAPS_API_KEY.
+      # Sem GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS: só gera o .aab (Hugo publica manualmente).
       groups:
         - radar_prod
       vars:
-        PACKAGE_NAME: "br.com.radarfamiliar"
         IS_BETA: "false"
     triggering:
       events:
@@ -65,17 +64,14 @@ workflows:
 
           PUBSPEC_BUILD=$(get_pubspec_build)
           CM_BUILD=$(as_int "${BUILD_NUMBER:-0}")
-          GOOGLE_PLAY_BUILD=0
-          if [ -n "${GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS:-}" ]; then
-            GOOGLE_PLAY_BUILD=$(as_int "$(google-play get-latest-build-number --package-name "$PACKAGE_NAME" || true)")
-          fi
 
-          LATEST_BUILD_NUMBER=$(max_int "$GOOGLE_PLAY_BUILD" "$PUBSPEC_BUILD" "$CM_BUILD")
+          # versionCode: maior entre pubspec e contador do Codemagic + 1 (sem API do Play).
+          LATEST_BUILD_NUMBER=$(max_int "$PUBSPEC_BUILD" "$CM_BUILD")
           NEW_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
           validate_build_number "$NEW_BUILD_NUMBER" "$LATEST_BUILD_NUMBER"
           NEW_BUILD_NAME=$(build_name_for "$NEW_BUILD_NUMBER" "$IS_BETA")
 
-          echo "Android $NEW_BUILD_NAME+$NEW_BUILD_NUMBER (google_play=$GOOGLE_PLAY_BUILD pubspec=$PUBSPEC_BUILD codemagic=$CM_BUILD)"
+          echo "Android $NEW_BUILD_NAME+$NEW_BUILD_NUMBER (pubspec=$PUBSPEC_BUILD codemagic=$CM_BUILD)"
           echo "NEW_BUILD_NAME=$NEW_BUILD_NAME" >> "$CM_ENV"
           echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> "$CM_ENV"
       - name: Build App Bundle
@@ -88,12 +84,8 @@ workflows:
       - build/**/outputs/**/*.aab
       - build/**/outputs/**/mapping.txt
     publishing:
-      # Ligar depois do primeiro upload manual do .aab no Play Console
-      # (a API do Play não cria o app).
-      # google_play:
-      #   credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
-      #   track: internal
-      #   submit_as_draft: true
+      # Apenas artefato + e-mail: build only até Hugo publicar manualmente no Play Console.
+      # (A API do Play não cria o app; upload manual na faixa desejada.)
       email:
         recipients:
           - hugopoletto34@gmail.com
