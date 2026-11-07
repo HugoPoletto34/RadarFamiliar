@@ -57,3 +57,35 @@ Redirect local: `br.com.radarfamiliar.dev://login-callback` (flavor `dev`).
 3. **Login** → `signInWithPassword`. Se o e-mail ainda não foi confirmado, a tela pede o código de confirmação.
 
 Mais contexto de deploy: [codemagic.md](codemagic.md).
+
+## Erro `400 Unsupported provider` / `provider is not enabled`
+
+O app está certo; o **projeto Supabase de produção** ainda não tem o Google ligado de verdade (só o botão no app não basta).
+
+### Checklist (produção — ref `xccwmeuubelmopifwtpk`)
+
+1. **Google Cloud Console** → Credentials → OAuth client **Web application**:
+   - *Authorized redirect URIs*: `https://xccwmeuubelmopifwtpk.supabase.co/auth/v1/callback` (copie também do painel Supabase em Providers → Google).
+2. **Supabase Dashboard** → Authentication → **Providers** → **Google**:
+   - Toggle **Enable Sign in with Google** = ligado.
+   - **Client ID** e **Client Secret** = os do cliente **Web** (não só Android).
+   - **Save** e espere 1–2 minutos.
+3. **Authentication** → **URL Configuration** → **Redirect URLs**: inclua `br.com.radarfamiliar://login-callback`.
+4. (iOS / alguns fluxos móveis) No mesmo painel Google, ative **Skip nonce check** se existir, ou use `skip_nonce_check = true` no config (já está em `supabase-prod`).
+
+### Via CLI (igual SMTP)
+
+Na raiz do repo, com Client ID e secret do Google Web:
+
+```powershell
+$env:SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID = "....apps.googleusercontent.com"
+$env:SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET = "GOCSPX-..."
+powershell -ExecutionPolicy Bypass -File scripts\supabase\push-prod-google.ps1
+```
+
+Ou configure só pelo painel (passos 1–3); não é obrigatório rodar o script se já salvou no Dashboard.
+
+### O que não causa esse erro
+
+- Falta de `google-services.json` no app (isso é FCM, não login Google).
+- Remetente Resend errado (isso é e-mail/senha, não OAuth).

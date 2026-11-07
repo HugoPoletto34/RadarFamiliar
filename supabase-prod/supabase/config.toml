@@ -11,6 +11,14 @@ project_id = "radar-familiar"
 [auth]
 additional_redirect_urls = ["br.com.radarfamiliar://login-callback"]
 
+# Google OAuth: client Web do Google Cloud (ID + secret) no painel ou via
+# scripts/supabase/push-prod-google.ps1. skip_nonce_check ajuda no fluxo móvel.
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+skip_nonce_check = true
+
 [auth.email]
 enable_confirmations = true
 otp_length = 6

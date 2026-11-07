@@ -8,7 +8,8 @@ Projeto `radar-familiar` (ref `xccwmeuubelmopifwtpk`, região São Paulo). O con
 | --- | --- |
 | `supabase link` | feito |
 | Migrations (`supabase db push --remote`) | as 4 aplicadas, sem seed (a 4ª traz `proto_ensure_group` e `proto_set_sharing`) |
-| Confirmação de cadastro (OTP 6 dígitos) e redirect `br.com.radarfamiliar://login-callback` | templates com `config push`; Google no painel ([auth.md](auth.md)) |
+| Confirmação de cadastro (OTP 6 dígitos) e redirect `br.com.radarfamiliar://login-callback` | templates com `config push` |
+| Google Sign-In | **ligar no painel** ou `scripts/supabase/push-prod-google.ps1` — ver [auth.md](auth.md) se der `Unsupported provider` |
 | SMTP próprio | **falta** |
 | Templates com o código (`{{ .Token }}`) | **falta**: depende do SMTP |
 

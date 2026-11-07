@@ -66,6 +66,11 @@ class _SignInPageState extends State<SignInPage> {
     if (msg.contains('invalid login credentials')) {
       return 'E-mail ou senha incorretos.';
     }
+    if (msg.contains('provider') &&
+        (msg.contains('not enabled') || msg.contains('unsupported'))) {
+      return 'Login com Google não está ligado no Supabase deste app. '
+          'Veja docs/auth.md (Google Cloud + painel Providers).';
+    }
     return e.message;
   }
 
