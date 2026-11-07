@@ -2,7 +2,7 @@
 
 App Flutter (Android e iOS) para grupos de família e amigos compartilharem localização de forma consensual. Backend no Supabase (Postgres + PostGIS), push via FCM.
 
-Este repositório está no **Marco M0 (Fundação)**: app "olá mundo" com login por código no e-mail, flavors `dev` e `prod`, esquema inicial do banco com RLS, RPCs e testes pgTAP, e CI.
+Este repositório está no **Marco M0 (Fundação)**: app "olá mundo" com login por **Google** ou **e-mail e senha** (código de 6 dígitos só na confirmação do cadastro), flavors `dev` e `prod`, esquema inicial do banco com RLS, RPCs e testes pgTAP, e CI.
 
 ## Estrutura
 
@@ -13,7 +13,7 @@ lib/
   core/config/              variáveis de ambiente (--dart-define-from-file)
   core/supabase/            cliente Supabase com sessão no Keystore/Keychain
   core/push/                Firebase (só FCM)
-  features/auth/            login por código de 6 dígitos no e-mail
+  features/auth/            Google + e-mail/senha (OTP só na confirmação do cadastro)
   features/home/            tela inicial
 env/                        dev.example.json e prod.example.json (copie sem ".example")
 supabase/
@@ -89,7 +89,7 @@ flutter pub get
 flutter run --flavor dev --dart-define-from-file=env/dev.json
 ```
 
-3. Entre com qualquer e-mail, pegue o código no Mailpit e confirme.
+3. Crie conta com e-mail e senha, confirme com o código de 6 dígitos no Mailpit (ou entre com Google, se configurado).
 
 Sem `--flavor`, o Flutter usa `dev` (`default-flavor` no `pubspec.yaml`). Sem `--dart-define-from-file`, o app abre uma tela avisando que falta a configuração.
 
@@ -110,7 +110,7 @@ Um fluxo mínimo para testar no emulador com o Supabase local: mapa, amigos e co
    - Com a chave (Maps SDK for Android, criada no Google Cloud, exige conta de faturamento), o app usa o Google Maps.
    - Vazia, o app usa o OpenStreetMap (flutter_map). Isso serve para desenvolvimento, mas não para produção (política de uso dos tiles do OSM).
 3. Defina a posição do emulador: `adb emu geo fix -46.6388 -23.5489` (longitude primeiro). Também dá para usar Extended controls → Location.
-4. Rode o app, entre com o código do Mailpit e permita a localização.
+4. Rode o app, entre (senha ou Google) e permita a localização.
 5. Use o app:
    - O mapa mostra o seu marcador "Eu".
    - Em **Amigos** (ícone no topo), toque em **Adicionar amigo simulado** (Ana, Bruno, Carla…). Os amigos simulados aparecem perto de você, já compartilhando, e se movem um pouco a cada atualização (5 s).
