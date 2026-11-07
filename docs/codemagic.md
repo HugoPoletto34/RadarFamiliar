@@ -5,8 +5,8 @@ O `codemagic.yaml` segue o modelo do `ilover-mobile`: as mesmas etapas de keycha
 | Workflow | Quando roda | O que faz |
 | --- | --- | --- |
 | `checks` | push e pull request | `flutter analyze` e `flutter test` (Linux) |
-| `android-prod` | tag `v*` ou manual | AAB e APK universal `prod` assinados (`radar_upload`); sem publicação automática no Play |
-| `ios-prod` | tag `v*` ou manual | IPA `prod` assinado e enviado para o TestFlight |
+| `android-prod` | **push em `main`**, tag `v*` ou manual | AAB e APK universal `prod` assinados (`radar_upload`); sem publicação automática no Play |
+| `ios-prod` | **push em `main`**, tag `v*` ou manual | IPA `prod` assinado e enviado para o TestFlight |
 
 O flavor `dev` aponta para o Supabase local (`10.0.2.2`) e serve só no emulador. Por isso ele não tem workflow.
 
@@ -100,7 +100,7 @@ Resolvido: `proto_ensure_group` e `proto_set_sharing` foram para a migration `20
 | `GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS` | opcional; JSON da service account do Play Console |
 
 6. No `codemagic.yaml`, preencha `IOS_APPLE_ID` com o Apple ID numérico do app, depois de criá-lo no App Store Connect.
-7. Para disparar: `git tag v1.0.0 && git push origin v1.0.0`, ou **Start new build** no painel.
+7. Para disparar builds de loja: **push em `main`** (como no Meu Kapital), ou tag `git tag v1.0.0 && git push origin v1.0.0`, ou **Start new build** no painel.
 
 O build number é sempre o maior entre loja, `pubspec.yaml` e contador do Codemagic, mais 1. O build name é `MAJOR.MINOR` do `pubspec.yaml` mais esse número (por exemplo `1.0.7`). Com `IS_BETA: "true"`, fica `1.0.7-beta`, como no ilover.
 
