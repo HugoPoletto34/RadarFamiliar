@@ -51,6 +51,8 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Sua localização é enviada só enquanto você escolhe compartilhar, e só para os grupos que você escolher.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>O Radar Familiar usa sua localização para o mapa e para enviar posição aos grupos em que você ativa o compartilhamento. Não rastreamos sem o seu consentimento explícito no app.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
