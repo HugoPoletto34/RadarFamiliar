@@ -112,11 +112,15 @@ O workflow `android-prod` declara `android_signing: - radar_upload` no `codemagi
 
 **1. Gerar o arquivo `.jks` (uma vez, fora do git):**
 
+Na raiz do repositório, no PowerShell:
+
 ```powershell
-keytool -genkey -v -keystore upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias <KEY_ALIAS>
+.\scripts\ci\generate-upload-keystore.ps1
 ```
 
-O `keytool` pede interativamente a senha do keystore (`<STORE_PASSWORD>`), dados do certificado e a senha da chave (`<KEY_PASSWORD>`). Anote **alias**, **senha do keystore** e **senha da chave** — os mesmos valores vão no painel do Codemagic e, se quiser, em `android/key.properties` local. Guarde cópia do `.jks`; o Codemagic não permite baixar de volta.
+O script grava em `android/upload-keystore.jks` (ignorado pelo git), pede **senha do keystore**, **senha da chave** (Enter repete a do keystore) e **alias** (padrão `upload`), e roda `keytool` com RSA 2048 e validade 10000 dias. Anote **alias**, **senha do keystore** e **senha da chave** — os mesmos valores vão no painel do Codemagic e, se quiser, em `android/key.properties` local. Guarde cópia do `.jks`; o Codemagic não permite baixar de volta.
+
+Alternativa manual: `keytool -genkey -v -keystore android/upload-keystore.jks ...` com os mesmos parâmetros.
 
 **2. Painel Codemagic (admin do time):**
 
@@ -162,7 +166,7 @@ O iOS ganhou os flavors no Xcode: configurações `Debug/Release/Profile-dev` e 
 3. Para builds locais de release, crie `android/key.properties`, que fica fora do git:
 
 ```properties
-storeFile=C:\\caminho\\upload-keystore.jks
+storeFile=C:\\Projetos\\RadarFamiliar\\android\\upload-keystore.jks
 storePassword=<STORE_PASSWORD>
 keyAlias=<KEY_ALIAS>
 keyPassword=<KEY_PASSWORD>
