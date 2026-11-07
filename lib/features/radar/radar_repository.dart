@@ -14,6 +14,35 @@ class RadarRepository {
   Future<String> ensureGroup() async =>
       await _client.rpc<String>('proto_ensure_group');
 
+  /// Grupo com mais membros (ex.: após aceitar convite); senão o grupo demo.
+  Future<String> resolveActiveGroup({String? preferGroupId}) async {
+    if (preferGroupId != null) return preferGroupId;
+
+    final mine = await _client
+        .from('group_members')
+        .select('group_id')
+        .eq('user_id', userId);
+    final ids = mine.map((r) => r['group_id'] as String).toList();
+    if (ids.isEmpty) return ensureGroup();
+
+    final members = await _client
+        .from('group_members')
+        .select('group_id')
+        .inFilter('group_id', ids);
+
+    var bestId = ids.first;
+    var bestCount = 0;
+    for (final id in ids) {
+      final count = members.where((r) => r['group_id'] == id).length;
+      if (count > bestCount) {
+        bestCount = count;
+        bestId = id;
+      }
+    }
+    if (bestCount > 1) return bestId;
+    return ensureGroup();
+  }
+
   Future<List<MemberLocation>> groupLocations(String groupId) async {
     final rows = await _client.rpc<List<dynamic>>(
       'get_group_locations',

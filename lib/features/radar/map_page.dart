@@ -12,10 +12,18 @@ import 'map/osm_radar_map.dart';
 import 'map/radar_pin.dart';
 import 'radar_controller.dart';
 import 'radar_repository.dart';
+import '../invites/join_invite_page.dart';
 import 'share_sheet.dart';
 
 class MapPage extends StatefulWidget {
-  const MapPage({super.key});
+  const MapPage({
+    super.key,
+    this.pendingInviteCode,
+    this.onConsumedPendingInvite,
+  });
+
+  final String? pendingInviteCode;
+  final VoidCallback? onConsumedPendingInvite;
 
   @override
   State<MapPage> createState() => _MapPageState();
@@ -36,7 +44,16 @@ class _MapPageState extends State<MapPage> {
       RadarRepository(Supabase.instance.client),
       LocationService(),
     )..addListener(_onChange);
-    unawaited(_controller.start());
+    unawaited(_boot());
+  }
+
+  Future<void> _boot() async {
+    await _controller.start();
+    final code = widget.pendingInviteCode;
+    if (code != null && mounted) {
+      widget.onConsumedPendingInvite?.call();
+      await _openJoinInvite(initialCode: code);
+    }
   }
 
   @override
@@ -86,6 +103,15 @@ class _MapPageState extends State<MapPage> {
           isMe: true,
         ),
     ];
+  }
+
+  Future<void> _openJoinInvite({String? initialCode}) async {
+    final groupId = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => JoinInvitePage(initialCode: initialCode),
+      ),
+    );
+    if (groupId != null) await _controller.useGroup(groupId);
   }
 
   Future<void> _openFriends() async {

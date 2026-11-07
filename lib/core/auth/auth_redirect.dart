@@ -1,8 +1,14 @@
 import '../config/env.dart';
 
-/// URL de retorno do OAuth (Google) após login no navegador in-app.
+/// Deep links de auth e convites (scheme por flavor).
 abstract final class AuthRedirect {
-  static String get uri => Env.isProd
-      ? 'br.com.radarfamiliar://login-callback'
-      : 'br.com.radarfamiliar.dev://login-callback';
+  static String get _scheme => Env.isProd
+      ? 'br.com.radarfamiliar'
+      : 'br.com.radarfamiliar.dev';
+
+  static String get uri => '$_scheme://login-callback';
+
+  static String inviteLink(String code) =>
+      '$_scheme://invite?code=${Uri.encodeComponent(code.trim())}';
 }
+

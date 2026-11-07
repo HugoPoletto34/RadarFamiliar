@@ -52,9 +52,9 @@ class RadarController extends ChangeNotifier {
     return friendColor(i < 0 ? 0 : i);
   }
 
-  Future<void> start() async {
+  Future<void> start({String? preferGroupId}) async {
     try {
-      groupId = await _repo.ensureGroup();
+      groupId = await _repo.resolveActiveGroup(preferGroupId: preferGroupId);
       sharing = await _repo.mySharing(groupId!);
       await refresh();
     } on Object catch (e) {
@@ -157,6 +157,13 @@ class RadarController extends ChangeNotifier {
     );
     await _repo.addFakeFriend(id, name);
     await refresh();
+  }
+
+  Future<void> useGroup(String id) async {
+    groupId = id;
+    sharing = await _repo.mySharing(id);
+    await refresh();
+    _notify();
   }
 
   Future<void> toggleFakeFriend(String friendId) async {
