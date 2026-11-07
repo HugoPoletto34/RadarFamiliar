@@ -30,7 +30,19 @@ Ou a legada service_role (JWT eyJ...). NAO use sb_publishable_ nem anon.
 $key = $key.Trim().Trim('"').Trim("'")
 
 if ($key -match '^sb_publishable_') {
-  throw 'Chave sb_publishable_ e publica (vai no app). Admin exige sb_secret_... ou JWT service_role.'
+  throw @'
+Voce colou a chave PUBLISHABLE (sb_publishable_...) — e a mesma do app/Codemagic (SUPABASE_PUBLISHABLE_KEY).
+
+Para este script, use a chave SECRET:
+  1. https://supabase.com/dashboard/project/xccwmeuubelmopifwtpk/settings/api
+  2. Aba "API Keys"
+  3. Linha "secret" (nao "publishable") -> Reveal -> copiar sb_secret_...
+  4. Ou, em "Legacy API Keys", a service_role (JWT eyJ...) se ainda estiver ativa
+
+  $env:SUPABASE_SERVICE_ROLE_KEY = "sb_secret_..."   # troque aqui
+
+Nunca committe nem coloque sb_secret no app.
+'@
 }
 
 $headers = @{

@@ -11,7 +11,10 @@ O app usa **e-mail e senha** (ou Google). O revisor da Apple não pode depender 
 
 ## Criar ou atualizar no Supabase (produção)
 
-1. No [painel Supabase](https://supabase.com/dashboard/project/xccwmeuubelmopifwtpk/settings/api), em **API Keys**, abra **secret** (`sb_secret_...`) com **Reveal** — não use **publishable** nem a chave que vai no app. Legado: JWT **service_role** (`eyJ...`) também funciona.
+1. [Settings → API](https://supabase.com/dashboard/project/xccwmeuubelmopifwtpk/settings/api):
+   - **Não** use a linha **publishable** (`sb_publishable_...`) — é a do `SUPABASE_PUBLISHABLE_KEY` / Codemagic.
+   - Use a linha **secret** → **Reveal** → copie `sb_secret_...` para `SUPABASE_SERVICE_ROLE_KEY`.
+   - Alternativa: em **Legacy API Keys**, copie **service_role** (`eyJ...`) se ainda existir.
 2. **Atualize o clone** (o script foi adicionado no commit `a7f3e18`):
 
 ```powershell
