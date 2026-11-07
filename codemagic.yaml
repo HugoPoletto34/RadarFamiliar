@@ -33,7 +33,7 @@ workflows:
         script: flutter test
 
   android-prod:
-    name: Android prod (App Bundle)
+    name: Android prod (AAB + APK)
     instance_type: mac_mini_m2
     max_build_duration: 60
     environment:
@@ -78,14 +78,20 @@ workflows:
           echo "Android $NEW_BUILD_NAME+$NEW_BUILD_NUMBER (google_play=$GOOGLE_PLAY_BUILD pubspec=$PUBSPEC_BUILD codemagic=$CM_BUILD)"
           echo "NEW_BUILD_NAME=$NEW_BUILD_NAME" >> "$CM_ENV"
           echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> "$CM_ENV"
-      - name: Build App Bundle
+      - name: Build App Bundle e APK
         script: |
           flutter build appbundle --release --flavor prod \
             --dart-define-from-file=env/prod.json \
             --build-name="$NEW_BUILD_NAME" \
             --build-number="$NEW_BUILD_NUMBER"
+          flutter build apk --release --flavor prod \
+            --dart-define-from-file=env/prod.json \
+            --build-name="$NEW_BUILD_NAME" \
+            --build-number="$NEW_BUILD_NUMBER"
     artifacts:
       - build/**/outputs/**/*.aab
+      - build/app/outputs/flutter-apk/*.apk
+      - build/**/outputs/apk/**/release/*.apk
       - build/**/outputs/**/mapping.txt
     publishing:
       # Ligar depois do primeiro upload manual do .aab no Play Console

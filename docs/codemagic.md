@@ -5,7 +5,7 @@ O `codemagic.yaml` segue o modelo do `ilover-mobile`: as mesmas etapas de keycha
 | Workflow | Quando roda | O que faz |
 | --- | --- | --- |
 | `checks` | push e pull request | `flutter analyze` e `flutter test` (Linux) |
-| `android-prod` | tag `v*` ou manual | App Bundle `prod` assinado com o keystore de upload |
+| `android-prod` | tag `v*` ou manual | AAB e APK universal `prod` assinados (`radar_upload`); sem publicação automática no Play |
 | `ios-prod` | tag `v*` ou manual | IPA `prod` assinado e enviado para o TestFlight |
 
 O flavor `dev` aponta para o Supabase local (`10.0.2.2`) e serve só no emulador. Por isso ele não tem workflow.
@@ -172,7 +172,7 @@ keyAlias=<KEY_ALIAS>
 keyPassword=<KEY_PASSWORD>
 ```
 
-4. No Play Console, crie o app `br.com.radarfamiliar` e suba **à mão** o primeiro `.aab` do artifact `android-prod` na faixa de teste interno. A API do Play não cria apps.
+4. No Play Console, crie o app `br.com.radarfamiliar` e suba **à mão** o primeiro `.aab` do workflow `android-prod` na faixa de teste interno (o mesmo build também gera um `.apk` em `build/app/outputs/flutter-apk/`, útil para testes fora da loja). A API do Play não cria apps.
 5. Para publicar direto pelo Codemagic: crie uma service account com acesso ao app, salve o JSON em `GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS` e descomente `google_play:` no `codemagic.yaml`.
 6. No Play Console, preencha também a Segurança de dados (localização precisa, e-mail) e a declaração de permissão de localização.
 
