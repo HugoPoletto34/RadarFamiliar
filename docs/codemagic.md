@@ -103,7 +103,7 @@ Resolvido: `proto_ensure_group` e `proto_set_sharing` foram para a migration `20
 4. **Code signing identities:**
    - **iOS certificates:** o certificado *Apple Distribution* do ilover serve, porque um certificado vale para todos os apps do time.
    - **iOS provisioning profiles:** depois de criar o App ID (seção 3), use "Fetch profiles" ou crie um perfil *App Store* para `br.com.radarfamiliar`. O `ios_signing` do workflow escolhe o perfil pelo bundle id.
-   - **Android keystores:** suba o keystore de upload (seção 4) com o nome de referência **`radar_upload`**.
+   - **Android keystores:** crie a identidade **`radar_upload`** (seção abaixo). **Não** use `kapital_android` — é de outro app.
 5. **Environment variables**, grupo **`radar_prod`**. Marque todas como *Secure*:
 
 | Variável | Valor |
@@ -116,6 +116,40 @@ Resolvido: `proto_ensure_group` e `proto_set_sharing` foram para a migration `20
 7. Para disparar: `git tag v1.0.0 && git push origin v1.0.0`, ou **Start new build** no painel.
 
 No **Android**, o build number é o maior entre `pubspec.yaml` e o contador do Codemagic, mais 1 (sem consultar o Play). No **iOS**, entram também TestFlight e App Store. O build name é `MAJOR.MINOR` do `pubspec.yaml` mais esse número (por exemplo `1.0.7`). Com `IS_BETA: "true"`, fica `1.0.7-beta`, como no ilover.
+
+### Criar keystore `radar_upload` no Codemagic
+
+O workflow `android-prod` declara `android_signing: - radar_upload` no `codemagic.yaml`. Se o time só tiver outra referência (por exemplo `kapital_android`), a build falha com *No keystores with reference 'radar_upload'*. O Radar Familiar precisa da sua própria identidade de upload.
+
+**1. Gerar o arquivo `.jks` (uma vez, fora do git):**
+
+```powershell
+keytool -genkey -v -keystore upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias <KEY_ALIAS>
+```
+
+O `keytool` pede interativamente a senha do keystore (`<STORE_PASSWORD>`), dados do certificado e a senha da chave (`<KEY_PASSWORD>`). Anote **alias**, **senha do keystore** e **senha da chave** — os mesmos valores vão no painel do Codemagic e, se quiser, em `android/key.properties` local. Guarde cópia do `.jks`; o Codemagic não permite baixar de volta.
+
+**2. Painel Codemagic (admin do time):**
+
+1. **Teams** → seu time → **codemagic.yaml settings** → **Code signing identities**.
+2. Aba **Android keystores** → **Add** (ou arraste o arquivo).
+3. **Reference name:** exatamente `radar_upload` (tem que bater com o `codemagic.yaml`).
+4. Preencha **Keystore password**, **Key alias** (`<KEY_ALIAS>`, por exemplo `upload`) e **Key password** com os valores do passo 1.
+
+**3. Variáveis `CM_KEYSTORE_*` na build (não é grupo `radar_prod`):**
+
+Com a referência `radar_upload` no YAML, o Codemagic injeta na máquina de build ([documentação](https://docs.codemagic.io/yaml-code-signing/signing-android/)):
+
+| Variável na build | Origem no painel |
+| --- | --- |
+| `CM_KEYSTORE_PATH` | caminho do `.jks` no runner |
+| `CM_KEYSTORE_PASSWORD` | Keystore password |
+| `CM_KEY_ALIAS` | Key alias |
+| `CM_KEY_PASSWORD` | Key password |
+
+O `scripts/ci/android_signing.sh` copia esses valores para `android/key.properties`. Não crie variáveis manuais com esses nomes no grupo `radar_prod`.
+
+**Reaproveitar keystore local:** se você já gerou `upload-keystore.jks` ou `radar-upload.jks` na sua máquina, use o **mesmo arquivo** no upload do Codemagic. O repositório não contém `.jks` nem `.keystore` (estão no `.gitignore`); só paths de exemplo na documentação.
 
 ## 3. Apple (App Store / TestFlight)
 
@@ -134,19 +168,15 @@ O iOS ganhou os flavors no Xcode: configurações `Debug/Release/Profile-dev` e 
 ## 4. Google Play
 
 1. Conta de desenvolvedor do Google Play (taxa única).
-2. Keystore de upload, gerado uma vez e guardado com backup (se perder, só o suporte do Google troca):
+2. Keystore de upload: gere e cadastre no Codemagic conforme **[Criar keystore `radar_upload` no Codemagic](#criar-keystore-radar_upload-no-codemagic)** (seção 2).
 
-```powershell
-keytool -genkey -v -keystore radar-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
-```
-
-3. Suba o `.jks` no Codemagic como `radar_upload` (seção 2). Para builds locais de release, crie `android/key.properties`, que fica fora do git:
+3. Para builds locais de release, crie `android/key.properties`, que fica fora do git:
 
 ```properties
-storeFile=C:\\caminho\\radar-upload.jks
-storePassword=...
-keyAlias=upload
-keyPassword=...
+storeFile=C:\\caminho\\upload-keystore.jks
+storePassword=<STORE_PASSWORD>
+keyAlias=<KEY_ALIAS>
+keyPassword=<KEY_PASSWORD>
 ```
 
 4. No Play Console, crie o app `br.com.radarfamiliar` e suba **à mão** o `.aab` baixado dos artifacts do workflow `android-prod` na faixa desejada (por exemplo teste interno). A API do Play não cria apps; o Codemagic hoje **não** publica no Play (só gera o bundle).
