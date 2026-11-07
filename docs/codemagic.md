@@ -49,16 +49,14 @@ supabase migration list --remote            # local e remoto devem bater
 
 `supabase db push` envia só `supabase/migrations/*.sql` (schema, RLS e RPCs). Ele **não** roda `supabase/seed.sql`. Nunca use `--include-seed` neste projeto: o seed cria as funções `dev_*` (amigos falsos em `auth.users`), que são só para o banco local.
 
-### 1.3 Auth por código de e-mail
+### 1.3 Auth (Google + e-mail e senha)
 
-No painel, em **Authentication**:
+Guia completo: [auth.md](auth.md). Resumo no painel **Authentication**:
 
-1. **Sign In / Providers → Email**: mantenha ligado, com "Confirm email" ligado, OTP de 6 dígitos e validade de 3600 s (iguais a `supabase/config.toml`).
-2. **Emails → Templates**, em **Magic Link** e **Confirm signup**:
-   - Assunto: `Seu código do Radar Familiar`
-   - Corpo: o conteúdo de `supabase/templates/otp.html`. O essencial é o `{{ .Token }}`: sem ele o e-mail leva um link, e o app espera o código.
-3. **URL Configuration**: em Redirect URLs, adicione `br.com.radarfamiliar://login-callback`. O login por código não usa redirect, mas isso deixa a configuração igual à local.
-4. **SMTP (obrigatório antes de ter usuários):** o e-mail embutido do Supabase só envia para membros da organização e tem limite muito baixo por hora. Em **Emails → SMTP Settings**, configure um provedor (Resend, Brevo, Amazon SES…) com um remetente do seu domínio. Depois ajuste em **Rate Limits** o limite de e-mails por hora.
+1. **Providers → Google**: ative e configure Client ID/secret (tipo *Web application* no Google Cloud). Redirect URLs do app: `br.com.radarfamiliar://login-callback`.
+2. **Providers → Email**: ligado, com **Confirm email** ligado. Login diário é **senha**, não OTP.
+3. **Emails → Templates**, em **Confirm sign up** (e recuperação, se usar): assunto `Seu código do Radar Familiar`, corpo `supabase/templates/otp.html` com `{{ .Token }}` — o código de 6 dígitos só na **confirmação do cadastro**.
+4. **SMTP (obrigatório para usuários reais):** Resend ou Brevo com remetente de **domínio verificado** (não `@gmail.com` como remetente). Gmail direto no Supabase só serve para teste pontual com senha de app. Ver [supabase-prod.md](supabase-prod.md).
 
 ### 1.4 `env/prod.json` (local) e variáveis do Codemagic
 

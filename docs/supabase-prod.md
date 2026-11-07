@@ -8,11 +8,11 @@ Projeto `radar-familiar` (ref `xccwmeuubelmopifwtpk`, região São Paulo). O con
 | --- | --- |
 | `supabase link` | feito |
 | Migrations (`supabase db push --remote`) | as 4 aplicadas, sem seed (a 4ª traz `proto_ensure_group` e `proto_set_sharing`) |
-| OTP de 6 dígitos e redirect `br.com.radarfamiliar://login-callback` | aplicados com `config push` |
+| Confirmação de cadastro (OTP 6 dígitos) e redirect `br.com.radarfamiliar://login-callback` | templates com `config push`; Google no painel ([auth.md](auth.md)) |
 | SMTP próprio | **falta** |
 | Templates com o código (`{{ .Token }}`) | **falta**: depende do SMTP |
 
-Enquanto os templates não sobem, o e-mail de login leva o link padrão do Supabase, sem código, e o app não consegue entrar.
+Enquanto os templates não sobem, o e-mail de confirmação de cadastro pode ir sem o código de 6 dígitos, e quem se cadastra por e-mail e senha não consegue confirmar a conta.
 
 ## 1. Copiar do painel
 
@@ -124,7 +124,7 @@ powershell -ExecutionPolicy Bypass -File scripts\supabase\push-prod-auth.ps1 -Et
 
 Esse `otp.html` é uma cópia de `supabase/templates/otp.html` (o do ambiente local), porque o `config push` só aceita arquivos dentro da pasta do `--workdir`. Ao mudar um, copie para o outro.
 
-Para conferir, `supabase config diff --workdir supabase-prod --remote=xccwmeuubelmopifwtpk` não deve listar nada em `auth.email.smtp` nem em `auth.email.template`. Depois, entre no app de produção com um e-mail qualquer: deve chegar o código de 6 dígitos.
+Para conferir, `supabase config diff --workdir supabase-prod --remote=xccwmeuubelmopifwtpk` não deve listar nada em `auth.email.smtp` nem em `auth.email.template`. Depois, **cadastre** no app com e-mail e senha: deve chegar o código de 6 dígitos de confirmação (login diário é com a senha, não com OTP).
 
 Pelo painel, depois de ligar o SMTP: **Authentication → Emails → Templates** (*Magic link* e *Confirm sign up*). Cole o assunto e o HTML de `otp.html`.
 
