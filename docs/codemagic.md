@@ -151,7 +151,7 @@ O `scripts/ci/android_signing.sh` copia esses valores para `android/key.properti
 5. Antes de enviar para revisão:
    - **Política de privacidade** publicada numa URL.
    - **App Privacy:** localização precisa, e-mail e identificador do usuário, ligados à identidade e não usados para rastreamento.
-   - **Conta para o revisor:** com login por código de e-mail, o revisor não recebe o código. É preciso definir antes como ele vai entrar, por exemplo com uma conta de demonstração com código fixo ou um e-mail de revisão que você acompanha.
+   - **Conta para o revisor:** e-mail/senha fixos — veja [apple-app-store-review.md](apple-app-store-review.md) (`revisor.apple@radarfamiliar.com`, script `create-apple-reviewer.ps1`).
    - Screenshots de iPhone 6,9" e 6,5".
 
 O iOS ganhou os flavors no Xcode: configurações `Debug/Release/Profile-dev` e `-prod`, schemes `dev` e `prod`. No `dev`, o bundle é `br.com.radarfamiliar.dev` e o nome é "Radar Familiar Dev". No `prod`, `br.com.radarfamiliar` e "Radar Familiar". Isso foi feito editando o `project.pbxproj` sem Mac: a primeira build `ios-prod` é o teste real. Se o Xcode reclamar, abra `ios/Runner.xcworkspace` num Mac e confira em Runner → Info → Configurations.
