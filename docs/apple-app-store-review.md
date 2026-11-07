@@ -11,7 +11,7 @@ O app usa **e-mail e senha** (ou Google). O revisor da Apple não pode depender 
 
 ## Criar ou atualizar no Supabase (produção)
 
-1. No [painel Supabase](https://supabase.com/dashboard/project/xccwmeuubelmopifwtpk/settings/api), copie a **secret key** / `service_role` (só uso local, nunca no app).
+1. No [painel Supabase](https://supabase.com/dashboard/project/xccwmeuubelmopifwtpk/settings/api), em **API Keys**, abra **secret** (`sb_secret_...`) com **Reveal** — não use **publishable** nem a chave que vai no app. Legado: JWT **service_role** (`eyJ...`) também funciona.
 2. **Atualize o clone** (o script foi adicionado no commit `a7f3e18`):
 
 ```powershell
@@ -33,6 +33,10 @@ Se o `-File` ainda falhar, use o caminho absoluto, por exemplo:
 ```powershell
 powershell -ExecutionPolicy Bypass -File "C:\Projetos\RadarFamiliar\scripts\supabase\create-apple-reviewer.ps1"
 ```
+
+### Erro 401 `no_authorization`
+
+Quase sempre é **chave errada**: `sb_publishable_...` ou `anon` no lugar de **secret**. Com `sb_secret_...`, o script não envia `Authorization: Bearer` (não é JWT). Atualize o repo (`git pull`) e rode de novo.
 
 ### Sem o script (só painel)
 
