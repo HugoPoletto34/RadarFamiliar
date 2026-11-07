@@ -34,6 +34,18 @@ if (-not $env:SUPABASE_AUTH_SMTP_PASS) {
 }
 if (-not $env:SUPABASE_AUTH_SMTP_PASS) { throw 'Chave SMTP vazia.' }
 
+function Remove-GoogleAuthBlock([string]$text) {
+  $i = $text.IndexOf('[auth.external.google]')
+  if ($i -lt 0) { return $text }
+  $j = $text.IndexOf('[auth.email]', $i)
+  if ($j -lt 0) { throw 'config.toml: [auth.external.google] sem [auth.email] depois.' }
+  return $text.Substring(0, $i) + $text.Substring($j)
+}
+
+# Google so via push-prod-google.ps1 (com Client ID/secret). Evita push de SMTP/templates
+# zerar o provedor quando SUPABASE_AUTH_EXTERNAL_GOOGLE_* nao estao no shell.
+$config = Remove-GoogleAuthBlock $config
+
 $target = $workdir
 if ($Etapa -eq 'smtp') {
   $target = Join-Path ([IO.Path]::GetTempPath()) 'radar-supabase-prod-smtp'
@@ -41,6 +53,13 @@ if ($Etapa -eq 'smtp') {
   New-Item -ItemType Directory -Force (Join-Path $target 'supabase') | Out-Null
   $i = $config.IndexOf('[auth.email.template.')
   [IO.File]::WriteAllText((Join-Path $target 'supabase\config.toml'), $(if ($i -ge 0) { $config.Substring(0, $i) } else { $config }))
+} else {
+  $dir = Join-Path ([IO.Path]::GetTempPath()) 'radar-supabase-prod-templates'
+  Remove-Item -Recurse -Force $dir -ErrorAction SilentlyContinue
+  New-Item -ItemType Directory -Force (Join-Path $dir 'supabase') | Out-Null
+  [IO.File]::WriteAllText((Join-Path $dir 'supabase\config.toml'), $config)
+  Copy-Item -Recurse (Join-Path $workdir 'supabase\templates') (Join-Path $dir 'supabase\templates') -ErrorAction SilentlyContinue
+  $target = $dir
 }
 
 try {
@@ -49,5 +68,7 @@ try {
   supabase config push --workdir $target --remote=$Ref --yes
   if ($LASTEXITCODE -ne 0) { throw "config push falhou (codigo $LASTEXITCODE). Veja docs/supabase-prod.md, secao 'Erros comuns'." }
 } finally {
-  if ($Etapa -eq 'smtp') { Remove-Item -Recurse -Force $target -ErrorAction SilentlyContinue }
+  if ($Etapa -eq 'smtp' -or $Etapa -eq 'templates') {
+    Remove-Item -Recurse -Force $target -ErrorAction SilentlyContinue
+  }
 }

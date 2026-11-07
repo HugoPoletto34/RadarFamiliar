@@ -62,16 +62,29 @@ Mais contexto de deploy: [codemagic.md](codemagic.md).
 
 O app está certo; o **projeto Supabase de produção** ainda não tem o Google ligado de verdade (só o botão no app não basta).
 
+### Teste rápido (navegador)
+
+Abra (logado ou não no Supabase):
+
+`https://xccwmeuubelmopifwtpk.supabase.co/auth/v1/authorize?provider=google`
+
+| Resultado | Significado |
+| --- | --- |
+| JSON `Unsupported provider` / `provider is not enabled` | Google **ainda desligado** ou sem Client ID/secret salvos — passos abaixo. |
+| Tela de login do Google | Provedor **ok**; se o app falhar, confira redirect `br.com.radarfamiliar://login-callback`. |
+
 ### Checklist (produção — ref `xccwmeuubelmopifwtpk`)
 
-1. **Google Cloud Console** → Credentials → OAuth client **Web application**:
+1. Painel direto: [Authentication → Providers → Google](https://supabase.com/dashboard/project/xccwmeuubelmopifwtpk/auth/providers?provider=Google).
+2. **Google Cloud Console** → Credentials → OAuth client **Web application**:
    - *Authorized redirect URIs*: `https://xccwmeuubelmopifwtpk.supabase.co/auth/v1/callback` (copie também do painel Supabase em Providers → Google).
-2. **Supabase Dashboard** → Authentication → **Providers** → **Google**:
-   - Toggle **Enable Sign in with Google** = ligado.
-   - **Client ID** e **Client Secret** = os do cliente **Web** (não só Android).
-   - **Save** e espere 1–2 minutos.
-3. **Authentication** → **URL Configuration** → **Redirect URLs**: inclua `br.com.radarfamiliar://login-callback`.
-4. (iOS / alguns fluxos móveis) No mesmo painel Google, ative **Skip nonce check** se existir, ou use `skip_nonce_check = true` no config (já está em `supabase-prod`).
+3. No painel Google do Supabase (link acima):
+   - **Enable Sign in with Google** = ligado.
+   - **Client ID** e **Client Secret** = copie do cliente **Web** (`…apps.googleusercontent.com` e `GOCSPX-…`). Campos **não** podem ficar vazios.
+   - Clique **Save** (só ligar o toggle sem Save não grava).
+   - Espere 1–2 minutos e repita o [teste rápido](#teste-rápido-navegador).
+4. **Authentication** → **URL Configuration** → **Redirect URLs**: inclua `br.com.radarfamiliar://login-callback`.
+5. (iOS) **Skip nonce check** = ligado no provedor Google do Supabase, ou rode `push-prod-google.ps1` (já define `skip_nonce_check`).
 
 ### Via CLI (igual SMTP)
 
