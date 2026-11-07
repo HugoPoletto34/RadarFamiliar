@@ -9,8 +9,8 @@ Projeto `radar-familiar` (ref `xccwmeuubelmopifwtpk`, região São Paulo). O con
 | `supabase link` | feito |
 | Migrations (`supabase db push --remote`) | as 4 aplicadas, sem seed (a 4ª traz `proto_ensure_group` e `proto_set_sharing`) |
 | OTP de 6 dígitos e redirect `br.com.radarfamiliar://login-callback` | aplicados com `config push` |
-| SMTP próprio | **falta** |
-| Templates com o código (`{{ .Token }}`) | **falta**: depende do SMTP |
+| SMTP próprio (Resend) | **declarado na nuvem** (`onboarding@resend.dev`); envio falhou em teste API — conferir `SUPABASE_AUTH_SMTP_PASS` e domínio verificado |
+| Templates com o código (`{{ .Token }}`) | **sem drift** no `config diff`; revalidar após SMTP válido |
 
 Enquanto os templates não sobem, o e-mail de login leva o link padrão do Supabase, sem código, e o app não consegue entrar.
 
