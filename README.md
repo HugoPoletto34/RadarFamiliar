@@ -159,7 +159,7 @@ flutter build apk --debug --flavor dev
 
 - Tabelas da especificação (seção 4.2), incluindo `last_locations` com uma linha por usuário e sem histórico.
 - RLS em todas as tabelas. Posições só são lidas por `get_group_locations` (pausa, precisão aproximada em grade de ~2 km, bateria opcional; simetria exigida só em grupos de Amigos).
-- RPCs: `create_group`, `create_invite`, `preview_invite`, `accept_invite`, `revoke_invite`, `ingest_location` (limite de 1 posição a cada 20 s), `get_group_locations`, `register_device`.
+- RPCs: `create_group`, `create_invite`, `preview_invite`, `accept_invite`, `revoke_invite`, `ingest_location` (limite de 1 posição a cada 20 s), `get_group_locations`, `register_device`. No app: **Convidar** (share/WhatsApp) e **Tenho código** — [docs/invites.md](docs/invites.md).
 - Gatilhos: perfil criado no cadastro, bloqueio de menores de 18, registro de consentimento, apagar a última posição quando o usuário desliga em todos os grupos, repasse de admin quando o último sai, aviso ao alvo de um alerta.
 
 Ficam para os próximos marcos: cercas no servidor e Realtime (M3/M4), Edge Function `send-push` e pg_cron (M4/M5), exclusão de conta (M5).
