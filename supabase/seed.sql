@@ -116,3 +116,14 @@ grant execute on function
   public.dev_tick_fake_friends(uuid),
   public.dev_toggle_fake_friend(uuid, uuid)
   to authenticated;
+
+-- Acorda a Edge Function send-push no Supabase local. A chave é a service_role
+-- padrão do `supabase start`. Este seed não sobe para a nuvem.
+insert into internal.push_hook (id, url, bearer)
+values (
+  1,
+  'http://kong:8000/functions/v1/send-push',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoyNzk5NTM1NjAwfQ.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU'
+)
+on conflict (id) do update
+set url = excluded.url, bearer = excluded.bearer;

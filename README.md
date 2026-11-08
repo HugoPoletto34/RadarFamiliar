@@ -8,13 +8,17 @@ Este repositório está no **Marco M0 (Fundação)**: app "olá mundo" com login
 
 ```
 lib/
-  main.dart                 inicializa Supabase e Firebase (opcional)
-  app/                      MaterialApp e roteamento por sessão
+  main.dart                 composition root (Supabase, push, serviços)
+  app.dart                  RadarFamiliarApp, AppScope e MaterialApp
   core/config/              variáveis de ambiente (--dart-define-from-file)
+  core/theme/               AppColors, AppDimens, AppTypography, AppTheme
+  core/di/                  AppScope (DI manual, sem Riverpod/BLoC)
   core/supabase/            cliente Supabase com sessão no Keystore/Keychain
   core/push/                Firebase (só FCM)
-  features/auth/            Google + e-mail/senha (OTP só na confirmação do cadastro)
-  features/home/            tela inicial
+  features/auth/screens/    login e AuthGate
+  features/radar/           models, services, controllers, screens, widgets
+  features/invites/         convite: model, service e tela
+  shared/widgets/           LoadingView e ErrorBox
 env/                        dev.example.json e prod.example.json (copie sem ".example")
 supabase/
   migrations/               esquema, RLS e RPCs

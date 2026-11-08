@@ -406,6 +406,10 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
+# Só a service role (o gatilho da fila) pode chamar. O app não envia push.
+[functions.send-push]
+verify_jwt = true
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

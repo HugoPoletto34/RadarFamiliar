@@ -7,7 +7,8 @@ Fluxo para trazer familiares/amigos para o **mesmo grupo** no Radar Familiar.
 1. Mapa → **Amigos** → **Convidar**.
 2. O app chama `create_invite` e abre o compartilhar do sistema (WhatsApp, etc.).
 3. A mensagem leva o **código** e o deep link  
-   `br.com.radarfamiliar://invite?code=XXXXXXXX` (`.dev` no flavor dev).
+   `radarfamiliar://invite/XXXXXXXX` (`radarfamiliar-dev` no flavor dev).  
+   O scheme não tem pontos: o WhatsApp lia `br.com.radarfamiliar.dev` como site e descartava o código.
 
 ## Quem aceita
 
@@ -20,10 +21,12 @@ Fluxo para trazer familiares/amigos para o **mesmo grupo** no Radar Familiar.
 
 | Flavor | Exemplo |
 | --- | --- |
-| `prod` | `br.com.radarfamiliar://invite?code=ABCD2345` |
-| `dev` | `br.com.radarfamiliar.dev://invite?code=ABCD2345` |
+| `prod` | `radarfamiliar://invite/ABCD2345` |
+| `dev` | `radarfamiliar-dev://invite/ABCD2345` |
 
-Android e iOS declaram o host `invite` no mesmo scheme do login.
+O formato antigo `br.com.radarfamiliar://invite?code=ABCD2345` (e o `.dev`) continua abrindo o app.
+
+Android e iOS declaram o host `invite` nos schemes `radarfamiliar` e `radarfamiliar-dev`, além do scheme de login.
 
 ## Backend
 

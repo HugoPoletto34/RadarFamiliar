@@ -167,6 +167,11 @@ select is(
    where user_id = '00000000-0000-0000-0000-00000000000b' and type = 'alert_created_about_you'),
   1::bigint, 'o alvo é avisado quando criam um alerta sobre ele'
 );
+select ok(
+  (select payload ? 'group_id' from public.notifications_outbox
+   where user_id = '00000000-0000-0000-0000-00000000000b' and type = 'alert_created_about_you'),
+  'o alerta inclui o grupo para o app abrir o mapa certo'
+);
 select is(
   (select count(*) from public.notifications_outbox
    where user_id = '00000000-0000-0000-0000-00000000000a' and type = 'member_joined'),
