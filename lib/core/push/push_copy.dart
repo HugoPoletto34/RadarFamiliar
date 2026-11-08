@@ -59,9 +59,9 @@ Map<String, String>? decodePushPayload(String? payload) {
   try {
     final decoded = jsonDecode(payload);
     if (decoded is! Map) return null;
-    return Map<Object?, Object?>.from(decoded).map(
-      (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
-    );
+    return Map<Object?, Object?>.from(
+      decoded,
+    ).map((key, value) => MapEntry(key.toString(), value?.toString() ?? ''));
   } on Object {
     return null;
   }

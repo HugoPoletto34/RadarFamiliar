@@ -1,7 +1,7 @@
 -- Testes de RLS e RPCs. Rodar com: supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(27);
+select plan(28);
 
 -- Ana (admin), João, Bia: membros da Família. Ana e João: Amigos. Carlos: de fora.
 insert into auth.users (id, email, raw_user_meta_data) values

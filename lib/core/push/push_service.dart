@@ -54,11 +54,7 @@ class PushService {
     if (Platform.isAndroid) {
       await Permission.notification.request();
     }
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    await _messaging.requestPermission(alert: true, badge: true, sound: true);
     await _messaging.setForegroundNotificationPresentationOptions(
       alert: false,
       badge: true,
@@ -113,12 +109,7 @@ class PushService {
     }
     data['title'] = title;
     data['body'] = body;
-    await showPushNotification(
-      _local,
-      title: title,
-      body: body,
-      data: data,
-    );
+    await showPushNotification(_local, title: title, body: body, data: data);
   }
 
   Future<String?> _token() async {

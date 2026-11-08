@@ -30,12 +30,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
   final local = FlutterLocalNotificationsPlugin();
   await _prepareLocalNotifications(local);
-  await _show(
-    local,
-    title: title,
-    body: body,
-    data: data,
-  );
+  await _show(local, title: title, body: body, data: data);
 }
 
 Future<void> prepareLocalNotifications(
