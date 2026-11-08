@@ -1,6 +1,7 @@
 import Flutter
 import GoogleMaps
 import UIKit
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -12,10 +13,20 @@ import UIKit
     if let key = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String, !key.isEmpty {
       GMSServices.provideAPIKey(key)
     }
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    UNUserNotificationCenter.current().delegate = self
+    let launched = super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    registerForPush()
+    return launched
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // O plugin do FCM precisa estar registrado antes do pedido de token APNs.
+    UNUserNotificationCenter.current().delegate = self
+    registerForPush()
+  }
+
+  private func registerForPush() {
+    UIApplication.shared.registerForRemoteNotifications()
   }
 }

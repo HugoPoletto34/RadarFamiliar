@@ -5,8 +5,8 @@ void main() {
   test('AuthRedirect usa scheme dev fora de prod', () {
     expect(AuthRedirect.uri, 'br.com.radarfamiliar.dev://login-callback');
     expect(
-      AuthRedirect.inviteLink('ABCD2345'),
-      'br.com.radarfamiliar.dev://invite?code=ABCD2345',
+      AuthRedirect.inviteLink(' abcd2345 '),
+      'radarfamiliar-dev://invite/ABCD2345',
     );
   });
 }
