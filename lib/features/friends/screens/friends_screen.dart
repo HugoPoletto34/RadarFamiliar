@@ -113,9 +113,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Future<void> _addFriend() async {
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const AddFriendScreen()),
-    );
+    await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const AddFriendScreen()));
     await _controller?.load();
   }
 

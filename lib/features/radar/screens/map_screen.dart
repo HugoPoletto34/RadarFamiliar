@@ -138,9 +138,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _openFriends() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => const FriendsScreen()),
-    );
+    await Navigator.of(
+      context,
+    ).push<void>(MaterialPageRoute(builder: (_) => const FriendsScreen()));
   }
 
   Future<void> _openMembers() async {
