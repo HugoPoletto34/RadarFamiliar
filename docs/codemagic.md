@@ -79,7 +79,7 @@ No Codemagic, os mesmos valores ficam no grupo `radar_prod` (seção 2). O `scri
 
 ### 1.5 Antes da primeira build de produção: RPCs do protótipo
 
-Resolvido: `proto_ensure_group` e `proto_set_sharing` foram para a migration `20261105100004_proto_production.sql` e estão no projeto da nuvem. Os nomes ainda são do protótipo: quando existirem convites e vários grupos, troque por RPCs definitivas e cubra-as com testes. As funções `dev_*` (amigos simulados) continuam só no seed, e os botões delas só aparecem no flavor `dev`.
+Resolvido: `proto_set_sharing` está na migration `20261105100004_proto_production.sql`. Amizades e convites de grupo estão em `20261120000000_friends.sql` (`proto_ensure_group` foi removido). As funções `dev_*` (amigos simulados) continuam só no seed, e os botões delas só aparecem no flavor `dev`.
 
 ## 2. Repositório e Codemagic
 

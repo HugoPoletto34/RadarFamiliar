@@ -8,7 +8,7 @@ import 'core/location/location_service.dart';
 import 'core/push/push_bootstrap.dart';
 import 'core/push/push_service.dart';
 import 'core/supabase/supabase_bootstrap.dart';
-import 'features/invites/services/invite_service.dart';
+import 'features/friends/services/friend_service.dart';
 import 'features/radar/services/radar_service.dart';
 
 Future<void> main() async {
@@ -26,7 +26,7 @@ Future<void> main() async {
   runApp(
     RadarFamiliarApp(
       radarService: RadarService(client),
-      inviteService: InviteService(client),
+      friendService: FriendService(client),
       locationService: LocationService(),
       pushService: push,
     ),

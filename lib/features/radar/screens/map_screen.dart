@@ -7,14 +7,15 @@ import '../../../core/config/env.dart';
 import '../../../core/di/app_scope.dart';
 import '../../../core/location/location_service.dart';
 import '../../../core/push/push_service.dart';
-import '../../invites/screens/join_invite_screen.dart';
+import '../../friends/screens/add_friend_screen.dart';
+import '../../friends/screens/friends_screen.dart';
 import '../controllers/radar_controller.dart';
 import '../widgets/avatar_style.dart';
 import '../widgets/map/google_radar_map.dart';
 import '../widgets/map/osm_radar_map.dart';
 import '../widgets/map/radar_pin.dart';
 import '../widgets/share_sheet.dart';
-import 'friends_screen.dart';
+import 'group_members_screen.dart';
 import 'groups_screen.dart';
 
 class MapScreen extends StatefulWidget {
@@ -75,7 +76,7 @@ class _MapScreenState extends State<MapScreen> {
     final code = widget.pendingInviteCode;
     if (code != null && mounted) {
       widget.onConsumedPendingInvite?.call();
-      await _openJoinInvite(initialCode: code);
+      await _openAddFriend(initialCode: code);
     }
   }
 
@@ -128,18 +129,25 @@ class _MapScreenState extends State<MapScreen> {
     ];
   }
 
-  Future<void> _openJoinInvite({String? initialCode}) async {
-    final groupId = await Navigator.of(context).push<String>(
+  Future<void> _openAddFriend({String? initialCode}) async {
+    await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => JoinInviteScreen(initialCode: initialCode),
+        builder: (_) => AddFriendScreen(initialCode: initialCode),
       ),
     );
-    if (groupId != null) await _controller.useGroup(groupId);
   }
 
   Future<void> _openFriends() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const FriendsScreen()),
+    );
+  }
+
+  Future<void> _openMembers() async {
     final focus = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => FriendsScreen(controller: _controller)),
+      MaterialPageRoute(
+        builder: (_) => GroupMembersScreen(controller: _controller),
+      ),
     );
     final f = _controller.friends.where((m) => m.userId == focus).firstOrNull;
     if (f == null || !f.hasPosition || _map == null) return;
@@ -154,12 +162,26 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _share() async {
+    if (!_controller.hasGroup) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Crie um grupo para compartilhar sua localização.'),
+        ),
+      );
+      await _openGroups();
+      return;
+    }
     final choice = await showShareSheet(context, _controller.sharing);
-    if (choice == null) return;
+    if (choice == null || !mounted) return;
     try {
       if (choice.stop) {
         await _controller.stopSharing();
       } else {
+        if (await _controller.needsAlwaysPermission()) {
+          if (!mounted) return;
+          final go = await confirmBackgroundLocation(context);
+          if (!go || !mounted) return;
+        }
         await _controller.startSharing(minutes: choice.minutes);
       }
     } on Object catch (e) {
@@ -185,6 +207,13 @@ class _MapScreenState extends State<MapScreen> {
         .where((f) => f.isSharing && !f.hasPosition)
         .length;
     final scheme = Theme.of(context).colorScheme;
+    final statusText = !c.hasGroup
+        ? 'Crie um grupo para compartilhar'
+        : sharingOn
+        ? shortSharingLabel(c.sharing)
+        : hiddenFriends > 0
+        ? 'Compartilhe para ver $hiddenFriends amigo(s)'
+        : 'Não compartilhando';
 
     return Scaffold(
       appBar: AppBar(
@@ -211,6 +240,11 @@ class _MapScreenState extends State<MapScreen> {
           IconButton(
             tooltip: 'Amigos',
             onPressed: _openFriends,
+            icon: const Icon(Icons.person_add_alt_1),
+          ),
+          IconButton(
+            tooltip: 'Membros',
+            onPressed: _openMembers,
             icon: Badge.count(
               count: c.friends.length,
               isLabelVisible: c.friends.isNotEmpty,
@@ -246,25 +280,31 @@ class _MapScreenState extends State<MapScreen> {
             right: 12,
             child: Column(
               children: [
-                _StatusPill(
-                  on: sharingOn,
-                  text: sharingOn
-                      ? shortSharingLabel(c.sharing)
-                      : hiddenFriends > 0
-                      ? 'Compartilhe para ver $hiddenFriends amigo(s)'
-                      : 'Não compartilhando',
-                ),
+                _StatusPill(on: sharingOn, text: statusText),
                 if (c.locationAccess != null &&
                     c.locationAccess != LocationAccess.granted)
                   _Banner(
                     icon: Icons.gps_off,
                     color: scheme.errorContainer,
-                    text: c.locationAccess == LocationAccess.serviceOff
-                        ? 'Localização do aparelho desligada.'
-                        : 'Permissão de localização negada.',
+                    text: switch (c.locationAccess!) {
+                      LocationAccess.serviceOff =>
+                        'Localização do aparelho desligada.',
+                      LocationAccess.backgroundDenied =>
+                        'Com o app fechado a posição para. '
+                            'Permita localização "Sempre".',
+                      LocationAccess.denied || LocationAccess.granted =>
+                        'Permissão de localização negada.',
+                    },
                     action: TextButton(
-                      onPressed: c.retryLocation,
-                      child: const Text('Tentar de novo'),
+                      onPressed:
+                          c.locationAccess == LocationAccess.backgroundDenied
+                          ? c.openPermissionSettings
+                          : c.retryLocation,
+                      child: Text(
+                        c.locationAccess == LocationAccess.backgroundDenied
+                            ? 'Ajustar'
+                            : 'Tentar de novo',
+                      ),
                     ),
                   ),
                 if (c.error != null)
@@ -325,11 +365,13 @@ class _StatusPill extends StatelessWidget {
               color: on ? scheme.primary : scheme.outline,
             ),
             const SizedBox(width: 8),
-            Text(
-              text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            Flexible(
+              child: Text(
+                text,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ),

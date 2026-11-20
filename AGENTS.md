@@ -24,7 +24,7 @@ O padrão de código segue o **Meu Kapital** (feature-first, `AppScope`, telas e
 
 - **Estado:** `ChangeNotifier` no controller da feature. Sem Riverpod, BLoC ou GetIt.
 - **DI:** manual. Serviços nascem em `main.dart` e descem pelo `AppScope`.
-- **Dados:** `RadarService` e `InviteService` falam com o Supabase. A tela não instancia cliente.
+- **Dados:** `RadarService` e `FriendService` falam com o Supabase. A tela não instancia cliente.
 - **Auth:** `AuthGate` observa a sessão e mostra `LoginScreen` ou `MapScreen`.
 - **UI:** `import 'package:radar_familiar/core/theme/theme.dart'`. Não hardcodar cor ou espaçamento se o token existir.
 - **Idioma:** português em código, comentários, UI e mensagens.

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:radar_familiar/core/auth/auth_redirect.dart';
 import 'package:radar_familiar/core/invites/invite_link.dart';
-import 'package:radar_familiar/features/invites/services/invite_actions.dart';
+import 'package:radar_familiar/features/friends/services/friend_actions.dart';
 
 void main() {
   test('parseia code do deep link', () {
@@ -22,7 +22,7 @@ void main() {
   test('mensagem isola o link sem scheme de domínio', () {
     const code = 'ABCD2345';
     final link = AuthRedirect.inviteLink(code);
-    final message = inviteShareMessage(code: code, link: link);
+    final message = friendShareMessage(code: code, link: link);
     expect(link, 'radarfamiliar-dev://invite/ABCD2345');
     expect(message, contains('\n$link\n'));
     expect(message, isNot(contains('br.com.radarfamiliar')));

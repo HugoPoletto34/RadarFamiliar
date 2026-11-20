@@ -11,8 +11,10 @@ import '../services/radar_service.dart';
 import '../widgets/avatar_style.dart';
 
 /// Estado do radar: grupo ativo, membros, posição e compartilhamento.
-class RadarController extends ChangeNotifier {
-  RadarController(this._service, this._location);
+class RadarController extends ChangeNotifier with WidgetsBindingObserver {
+  RadarController(this._service, this._location) {
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   static const pollInterval = Duration(seconds: 5);
   static const _minSendInterval = Duration(seconds: 20);
@@ -43,12 +45,20 @@ class RadarController extends ChangeNotifier {
 
   Timer? _poll;
   StreamSubscription<Position>? _positions;
+  Future<void> _trackChain = Future<void>.value();
   DateTime? _lastSent;
+  bool _trackingBackground = false;
+  bool _expiring = false;
   bool _disposed = false;
 
   String get myId => _service.userId;
 
-  String get activeGroupTitle => groupName ?? 'Amigos';
+  String get activeGroupTitle => groupName ?? 'Sem grupo';
+
+  bool get hasGroup => groupId != null;
+
+  bool get isAdmin =>
+      members.where((m) => m.userId == myId).firstOrNull?.role == 'admin';
 
   List<MemberLocation> get friends =>
       members.where((m) => m.userId != myId).toList();
@@ -67,41 +77,145 @@ class RadarController extends ChangeNotifier {
   Future<void> start({String? preferGroupId}) async {
     try {
       groupId = await _service.resolveActiveGroup(preferGroupId: preferGroupId);
-      await _loadGroupMeta(groupId!);
-      await _service.setPreferredGroupId(groupId!);
-      sharing = await _service.mySharing(groupId!);
-      await refresh();
+      if (groupId != null) {
+        await _loadGroupMeta(groupId!);
+        await _service.setPreferredGroupId(groupId!);
+        sharing = await _service.mySharing(groupId!);
+        await refresh();
+      } else {
+        groupName = null;
+        groupKind = null;
+        members = const [];
+        sharing = SharingState.off;
+        sharingByUser = const {};
+        error = null;
+        _notify();
+      }
     } on Object catch (e) {
       error = 'Não foi possível falar com o Supabase: $e';
       _notify();
     }
     _poll = Timer.periodic(pollInterval, (_) => refresh());
-    await _startLocation();
+    await _syncTracking();
   }
 
-  Future<void> _startLocation() async {
-    locationAccess = await _location.ensureAccess();
-    _notify();
-    if (locationAccess != LocationAccess.granted) return;
-    final last = await _location.lastKnown();
-    if (last != null) _onPosition(last);
-    _positions = _location.positions().listen(_onPosition);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_disposed) return;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // Fora da tela o GPS segue enviando; a enquete do mapa volta aqui.
+        _poll ??= Timer.periodic(pollInterval, (_) => refresh());
+        unawaited(refresh());
+        unawaited(_syncTracking());
+      case AppLifecycleState.hidden || AppLifecycleState.paused:
+        _poll?.cancel();
+        _poll = null;
+      case AppLifecycleState.inactive || AppLifecycleState.detached:
+        break;
+    }
   }
+
+  Future<bool> needsAlwaysPermission() => _location.needsAlwaysPermission();
+
+  Future<void> openPermissionSettings() => _location.openPermissionSettings();
 
   Future<void> retryLocation() async {
+    if (locationAccess == LocationAccess.serviceOff) {
+      await _location.openLocationSettings();
+    }
+    await _syncTracking();
+  }
+
+  /// Uma troca de modo por vez. A última chamada enxerga o compartilhamento
+  /// já atualizado e substitui o fluxo anterior.
+  Future<void> _syncTracking() {
+    final run = _trackChain.then((_) async {
+      if (_disposed) return;
+      await _applyTracking();
+    });
+    _trackChain = run.catchError((Object e) {
+      debugPrint('rastreamento: $e');
+    });
+    return _trackChain;
+  }
+
+  Future<void> _applyTracking() async {
+    if (_disposed) return;
+    final wantBackground = sharing.on && !sharing.expired;
+    final access = wantBackground
+        ? await _location.ensureBackgroundAccess()
+        : await _location.ensureAccess();
+    if (_disposed) return;
+
+    locationAccess = access;
+    _notify();
+
+    final canTrack =
+        access == LocationAccess.granted ||
+        access == LocationAccess.backgroundDenied;
+    final background = wantBackground && access == LocationAccess.granted;
+    if (!canTrack) {
+      await _location.setBackgroundActive(false);
+      await _positions?.cancel();
+      _positions = null;
+      _trackingBackground = false;
+      return;
+    }
+
+    if (_positions != null && _trackingBackground == background) {
+      await _location.setBackgroundActive(background);
+      return;
+    }
+
     await _positions?.cancel();
-    await _startLocation();
+    _positions = null;
+    if (_disposed) return;
+
+    await _location.setBackgroundActive(background);
+    if (_disposed) {
+      await _location.setBackgroundActive(false);
+      return;
+    }
+
+    _trackingBackground = background;
+    final last = await _location.lastKnown();
+    if (_disposed) return;
+    if (last != null) _onPosition(last);
+
+    _positions = _location
+        .positions(background: background)
+        .listen(
+          _onPosition,
+          onError: (Object e) => debugPrint('fluxo de localização: $e'),
+        );
   }
 
   void _onPosition(Position p) {
     myPosition = p;
     _notify();
-    unawaited(_maybeSend());
+    final hold = _trackingBackground;
+    unawaited(_sendFix(hold));
+  }
+
+  /// No iPhone, cada leitura ganha uma janela de execução. Sem isso o sistema
+  /// suspende o app antes do pedido ao Supabase terminar.
+  Future<void> _sendFix(bool hold) async {
+    if (hold) await _location.beginUpload();
+    try {
+      await _maybeSend();
+    } finally {
+      if (hold) await _location.endUpload();
+    }
   }
 
   Future<void> _maybeSend({bool force = false}) async {
+    if (sharing.expired) {
+      await _turnOffIfExpired();
+      return;
+    }
     final p = myPosition;
-    if (groupId == null || p == null || !sharing.on || sharing.expired) return;
+    if (groupId == null || p == null || !sharing.on) return;
     final now = DateTime.now();
     if (!force &&
         _lastSent != null &&
@@ -124,13 +238,26 @@ class RadarController extends ChangeNotifier {
     }
   }
 
+  Future<void> _turnOffIfExpired() async {
+    final id = groupId;
+    if (id == null || _expiring || !sharing.expired || _disposed) return;
+    _expiring = true;
+    try {
+      sharing = await _service.setSharing(id, on: false);
+      if (_disposed) return;
+      await _syncTracking();
+    } on Object catch (e) {
+      debugPrint('fim do compartilhamento: $e');
+    } finally {
+      _expiring = false;
+    }
+  }
+
   Future<void> refresh() async {
     final id = groupId;
     if (id == null || _disposed) return;
     try {
-      if (sharing.expired) {
-        sharing = await _service.setSharing(id, on: false);
-      }
+      if (sharing.expired) await _turnOffIfExpired();
       if (_lastSent == null ||
           DateTime.now().difference(_lastSent!) > _heartbeat) {
         await _maybeSend();
@@ -153,6 +280,7 @@ class RadarController extends ChangeNotifier {
     if (id == null) return;
     sharing = await _service.setSharing(id, on: true, minutes: minutes);
     _lastSent = null;
+    await _syncTracking();
     await _maybeSend(force: true);
     await refresh();
   }
@@ -161,6 +289,7 @@ class RadarController extends ChangeNotifier {
     final id = groupId;
     if (id == null) return;
     sharing = await _service.setSharing(id, on: false);
+    await _syncTracking();
     await refresh();
   }
 
@@ -188,8 +317,13 @@ class RadarController extends ChangeNotifier {
   Future<RadarGroup> createGroup({
     required String name,
     required GroupKind kind,
+    List<String> inviteeIds = const [],
   }) async {
-    final group = await _service.createGroup(name: name, kind: kind);
+    final group = await _service.createGroup(
+      name: name,
+      kind: kind,
+      inviteeIds: inviteeIds,
+    );
     await useGroup(group.id);
     return group;
   }
@@ -216,8 +350,10 @@ class RadarController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
     unawaited(_positions?.cancel());
+    unawaited(_location.setBackgroundActive(false));
     super.dispose();
   }
 }

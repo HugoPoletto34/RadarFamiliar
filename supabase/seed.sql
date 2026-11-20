@@ -1,7 +1,7 @@
 -- Amigos simulados do protótipo local (botões do flavor dev).
 -- Este arquivo só roda no Supabase local (`supabase db reset`); `supabase db push`
 -- não envia seeds, então as funções abaixo nunca chegam à nuvem. As funções que o
--- app usa também em produção (proto_*) estão em supabase/migrations.
+-- app usa também em produção estão em supabase/migrations.
 
 -- Cria um usuário fictício que já entra no grupo compartilhando, perto de quem chamou.
 create or replace function public.dev_add_fake_friend(p_group_id uuid, p_name text)
@@ -32,6 +32,15 @@ begin
   );
 
   update public.profiles set birth_date = date '1990-01-01' where id = v_id;
+
+  insert into public.friendships (requester_id, addressee_id, status, accepted_at)
+  values (
+    least((select auth.uid()), v_id),
+    greatest((select auth.uid()), v_id),
+    'accepted',
+    now()
+  )
+  on conflict do nothing;
 
   insert into public.group_members (group_id, user_id, role) values (p_group_id, v_id, 'member');
   insert into public.sharing_settings (group_id, user_id, mode, precision, show_battery, consent_version)

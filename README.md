@@ -17,7 +17,7 @@ lib/
   core/push/                Firebase (só FCM)
   features/auth/screens/    login e AuthGate
   features/radar/           models, services, controllers, screens, widgets
-  features/invites/         convite: model, service e tela
+  features/friends/         amizades: código pessoal, pedidos e convites de grupo
   shared/widgets/           LoadingView e ErrorBox
 env/                        dev.example.json e prod.example.json (copie sem ".example")
 supabase/
@@ -109,7 +109,7 @@ Build e publicação (TestFlight e App Bundle do Play) ficam no `codemagic.yaml`
 
 Um fluxo mínimo para testar no emulador com o Supabase local: mapa, amigos e compartilhamento por tempo limitado.
 
-1. Rode `supabase db reset`. Ele carrega `supabase/seed.sql`, que cria as funções `dev_*` dos amigos simulados. Elas só existem no banco local e não vão para a nuvem. As funções `proto_*` (grupo "Amigos" e compartilhamento) estão nas migrations e existem também na nuvem.
+1. Rode `supabase db reset`. Ele carrega `supabase/seed.sql`, que cria as funções `dev_*` dos amigos simulados. Elas só existem no banco local e não vão para a nuvem. O compartilhamento (`proto_set_sharing`) e as RPCs de amizade/grupos estão nas migrations.
 2. Em `env/dev.json`, `GOOGLE_MAPS_API_KEY` é opcional:
    - Com a chave (Maps SDK for Android, criada no Google Cloud, exige conta de faturamento), o app usa o Google Maps.
    - Vazia, o app usa o OpenStreetMap (flutter_map). Isso serve para desenvolvimento, mas não para produção (política de uso dos tiles do OSM).
@@ -119,7 +119,7 @@ Um fluxo mínimo para testar no emulador com o Supabase local: mapa, amigos e co
    - O mapa mostra o seu marcador "Eu".
    - Em **Amigos** (ícone no topo), toque em **Adicionar amigo simulado** (Ana, Bruno, Carla…). Os amigos simulados aparecem perto de você, já compartilhando, e se movem um pouco a cada atualização (5 s).
    - O botão ao lado de cada amigo simula ele parar ou voltar a compartilhar.
-   - Em **Compartilhar**, escolha 15 minutos, 1 hora ou até desligar. Enquanto estiver ligado, o app envia a posição pelo `ingest_location` (no máximo a cada 20 s). No grupo "Amigos", criado automaticamente, só vê os outros quem também está compartilhando. Por isso, desligado, o mapa mostra "Compartilhe para ver N amigo(s)".
+   - Em **Compartilhar**, escolha 15 minutos, 1 hora ou até desligar. Enquanto estiver ligado, o app envia a posição pelo `ingest_location` (no máximo a cada 20 s). Em grupos do tipo Amigos, só vê os outros quem também está compartilhando. Por isso, desligado, o mapa mostra "Compartilhe para ver N amigo(s)". Sem grupo, o mapa pede para criar um.
    - Toque num marcador para ver nome, horário e bateria. Toque num amigo da lista para centralizar nele.
 
 O botão de amigo simulado só aparece no flavor `dev`.
@@ -163,7 +163,7 @@ flutter build apk --debug --flavor dev
 
 - Tabelas da especificação (seção 4.2), incluindo `last_locations` com uma linha por usuário e sem histórico.
 - RLS em todas as tabelas. Posições só são lidas por `get_group_locations` (pausa, precisão aproximada em grade de ~2 km, bateria opcional; simetria exigida só em grupos de Amigos).
-- RPCs: `create_group`, `create_invite`, `preview_invite`, `accept_invite`, `revoke_invite`, `ingest_location` (limite de 1 posição a cada 20 s), `get_group_locations`, `register_device`. No app: **Convidar** (share/WhatsApp) e **Tenho código** — [docs/invites.md](docs/invites.md).
+- RPCs: `create_group`, amizade (`my_friend_code`, `request_friend`, …), convites de grupo (`invite_to_group`, `respond_group_invite`, …), `ingest_location` (limite de 1 posição a cada 20 s), `get_group_locations`, `register_device`. No app: **Amigos** (código pessoal) e **Membros** (grupo ativo) — [docs/invites.md](docs/invites.md).
 - Gatilhos: perfil criado no cadastro, bloqueio de menores de 18, registro de consentimento, apagar a última posição quando o usuário desliga em todos os grupos, repasse de admin quando o último sai, aviso ao alvo de um alerta.
 
 Ficam para os próximos marcos: cercas no servidor e Realtime (M3/M4), Edge Function `send-push` e pg_cron (M4/M5), exclusão de conta (M5).

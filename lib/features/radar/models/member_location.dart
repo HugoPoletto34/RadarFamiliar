@@ -4,6 +4,7 @@ class MemberLocation {
     required this.userId,
     required this.name,
     required this.status,
+    this.role = 'member',
     this.lat,
     this.lng,
     this.battery,
@@ -14,6 +15,7 @@ class MemberLocation {
     userId: row['user_id'] as String,
     name: (row['display_name'] as String?) ?? 'Sem nome',
     status: row['status'] as String,
+    role: (row['role'] as String?) ?? 'member',
     lat: (row['lat'] as num?)?.toDouble(),
     lng: (row['lng'] as num?)?.toDouble(),
     battery: (row['battery'] as num?)?.toInt(),
@@ -25,6 +27,9 @@ class MemberLocation {
 
   /// 'sharing', 'paused' ou 'not_sharing'.
   final String status;
+
+  /// 'admin', 'member' ou 'guardian'.
+  final String role;
   final double? lat;
   final double? lng;
   final int? battery;

@@ -15,9 +15,6 @@ class RadarService {
 
   String get userId => _client.auth.currentUser!.id;
 
-  Future<String> ensureGroup() async =>
-      await _client.rpc<String>('proto_ensure_group');
-
   Future<String?> preferredGroupId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_activeGroupKey);
@@ -28,8 +25,13 @@ class RadarService {
     await prefs.setString(_activeGroupKey, groupId);
   }
 
-  /// Preferência do aparelho, senão o grupo com mais membros; senão o demo.
-  Future<String> resolveActiveGroup({String? preferGroupId}) async {
+  Future<void> clearPreferredGroupId() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_activeGroupKey);
+  }
+
+  /// Preferência do aparelho, senão o grupo com mais membros. Sem grupo: null.
+  Future<String?> resolveActiveGroup({String? preferGroupId}) async {
     if (preferGroupId != null) return preferGroupId;
 
     final mine = await _client
@@ -37,7 +39,10 @@ class RadarService {
         .select('group_id')
         .eq('user_id', userId);
     final ids = mine.map((r) => r['group_id'] as String).toList();
-    if (ids.isEmpty) return ensureGroup();
+    if (ids.isEmpty) {
+      await clearPreferredGroupId();
+      return null;
+    }
 
     final saved = await preferredGroupId();
     if (saved != null && ids.contains(saved)) return saved;
@@ -56,8 +61,7 @@ class RadarService {
         bestId = id;
       }
     }
-    if (bestCount > 1) return bestId;
-    return ensureGroup();
+    return bestId;
   }
 
   Future<List<RadarGroup>> myGroups() async {
@@ -89,13 +93,18 @@ class RadarService {
   Future<RadarGroup> createGroup({
     required String name,
     required GroupKind kind,
+    List<String> inviteeIds = const [],
   }) async {
     final error = RadarGroup.validateName(name);
     if (error != null) throw ArgumentError(error);
 
     final id = await _client.rpc<String>(
       'create_group',
-      params: {'p_name': name.trim(), 'p_kind': kind.apiValue},
+      params: {
+        'p_name': name.trim(),
+        'p_kind': kind.apiValue,
+        'p_invitee_ids': inviteeIds,
+      },
     );
     return RadarGroup(id: id, name: name.trim(), kind: kind);
   }

@@ -224,6 +224,9 @@ async function sendFcm(
 
 function pushText(type: string, payload: Record<string, unknown>) {
   const member = clean(payload.member_name);
+  const friend = clean(payload.friend_name);
+  const inviter = clean(payload.invited_by_name);
+  const group = clean(payload.group_name);
   const watcher = clean(payload.watcher_name);
   const place = clean(payload.place_name);
   switch (type) {
@@ -231,6 +234,23 @@ function pushText(type: string, payload: Record<string, unknown>) {
       return {
         title: "Novo integrante",
         body: member ? `${member} entrou no grupo` : "Alguém entrou no grupo",
+      };
+    case "friend_request":
+      return {
+        title: "Pedido de amizade",
+        body: friend ? `${friend} quer ser seu amigo` : "Alguém quer ser seu amigo",
+      };
+    case "friend_accepted":
+      return {
+        title: "Amizade aceita",
+        body: friend
+          ? `${friend} aceitou seu pedido`
+          : "Seu pedido de amizade foi aceito",
+      };
+    case "group_invite":
+      return {
+        title: "Convite de grupo",
+        body: groupInviteBody(inviter, group),
       };
     case "alert_created_about_you":
       return {
@@ -243,6 +263,13 @@ function pushText(type: string, payload: Record<string, unknown>) {
         body: clean(payload.body) ?? "Você tem uma nova notificação",
       };
   }
+}
+
+function groupInviteBody(inviter: string | null, group: string | null) {
+  if (inviter && group) return `${inviter} convidou você para ${group}`;
+  if (inviter) return `${inviter} convidou você para um grupo`;
+  if (group) return `Você foi convidado para ${group}`;
+  return "Você recebeu um convite de grupo";
 }
 
 function alertBody(watcher: string | null, place: string | null) {

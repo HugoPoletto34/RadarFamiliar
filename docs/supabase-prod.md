@@ -7,7 +7,7 @@ Projeto `radar-familiar` (ref `xccwmeuubelmopifwtpk`, região São Paulo). O con
 | Item | Situação |
 | --- | --- |
 | `supabase link` | feito |
-| Migrations (`supabase db push --remote`) | as 4 aplicadas, sem seed (a 4ª traz `proto_ensure_group` e `proto_set_sharing`) |
+| Migrations (`supabase db push --remote`) | aplicadas, sem seed (`proto_set_sharing`, amizades e convites de grupo) |
 | Confirmação de cadastro (OTP 6 dígitos) e redirect `br.com.radarfamiliar://login-callback` | templates com `config push` |
 | Google Sign-In | **ligar no painel** ou `scripts/supabase/push-prod-google.ps1` — ver [auth.md](auth.md) se der `Unsupported provider` |
 | SMTP próprio | **falta** |
@@ -37,7 +37,7 @@ supabase migration list --remote        # colunas local e remote iguais
 
 Na CLI 3.x, os comandos de banco apontam para o Supabase **local** por padrão. Para mirar a nuvem, passe `--remote`.
 
-**Nunca rode o seed em produção:** não use `--include-seed` nem `supabase db reset --remote`, que apaga o banco. O `supabase/seed.sql` cria as funções de amigos simulados (`dev_*`), que inserem usuários falsos em `auth.users`, e é só para o banco local. As funções `proto_ensure_group` e `proto_set_sharing`, que o app usa ao abrir o mapa, estão na migration `20261105100004_proto_production.sql`.
+**Nunca rode o seed em produção:** não use `--include-seed` nem `supabase db reset --remote`, que apaga o banco. O `supabase/seed.sql` cria as funções de amigos simulados (`dev_*`), que inserem usuários falsos em `auth.users`, e é só para o banco local. O compartilhamento (`proto_set_sharing`) e as RPCs de amizade/grupos estão nas migrations.
 
 ## 3. Auth: por que o template não aparece
 
@@ -154,4 +154,4 @@ flutter run --flavor prod --dart-define-from-file=env/prod.json
 
 O `env/prod.json` fica fora do git. No Codemagic, os mesmos valores vão no grupo `radar_prod`.
 
-As RPCs que o app chama ao abrir o mapa (`proto_ensure_group`, `proto_set_sharing`, `get_group_locations`, `ingest_location`) estão todas nas migrations. Se aparecer `PGRST202 ... not in schema cache`, confira com `supabase migration list --remote=<ref>` se a última migration subiu.
+As RPCs que o app chama ao abrir o mapa (`proto_set_sharing`, `get_group_locations`, `ingest_location`, amizade e grupos) estão todas nas migrations. Se aparecer `PGRST202 ... not in schema cache`, confira com `supabase migration list --remote=<ref>` se a última migration subiu.

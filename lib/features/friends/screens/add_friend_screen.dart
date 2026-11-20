@@ -5,36 +5,35 @@ import 'package:flutter/material.dart';
 import '../../../core/di/app_scope.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../shared/widgets/error_box.dart';
-import '../models/invite_preview.dart';
-import '../services/invite_service.dart';
+import '../models/friend.dart';
+import '../services/friend_service.dart';
 
-/// Entrar em um grupo com o código (ou deep link). Exige data de nascimento se
-/// o perfil ainda não tiver (regra do servidor para aceitar convite).
-class JoinInviteScreen extends StatefulWidget {
-  const JoinInviteScreen({super.key, this.initialCode});
+/// Enviar pedido de amizade com o código (ou deep link).
+class AddFriendScreen extends StatefulWidget {
+  const AddFriendScreen({super.key, this.initialCode});
 
   final String? initialCode;
 
   @override
-  State<JoinInviteScreen> createState() => _JoinInviteScreenState();
+  State<AddFriendScreen> createState() => _AddFriendScreenState();
 }
 
-class _JoinInviteScreenState extends State<JoinInviteScreen> {
+class _AddFriendScreenState extends State<AddFriendScreen> {
   final _code = TextEditingController();
-  InviteService? _invites;
+  FriendService? _friends;
   bool _loadedInitial = false;
 
-  InvitePreview? _preview;
+  FriendPreview? _preview;
   bool _busy = false;
   String? _error;
   DateTime? _birthDate;
 
-  InviteService get _service => _invites!;
+  FriendService get _service => _friends!;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _invites ??= AppScope.of(context).inviteService;
+    _friends ??= AppScope.of(context).friendService;
     if (!_loadedInitial && widget.initialCode != null) {
       _loadedInitial = true;
       _code.text = widget.initialCode!;
@@ -56,14 +55,14 @@ class _JoinInviteScreenState extends State<JoinInviteScreen> {
     try {
       await action();
     } on Object catch (e) {
-      _error = inviteErrorMessage(e);
+      _error = friendErrorMessage(e);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _loadPreview() => _run(() async {
-    final preview = await _service.previewInvite(_code.text.trim());
+    final preview = await _service.previewFriendCode(_code.text.trim());
     final birth = await _service.birthDate();
     setState(() {
       _preview = preview;
@@ -83,22 +82,26 @@ class _JoinInviteScreenState extends State<JoinInviteScreen> {
     if (picked != null) setState(() => _birthDate = picked);
   }
 
-  Future<void> _accept() => _run(() async {
+  Future<void> _send() => _run(() async {
     if (_birthDate == null) {
       setState(() => _error = 'Informe sua data de nascimento para continuar.');
       return;
     }
     await _service.ensureBirthDate(_birthDate!);
-    final groupId = await _service.acceptInvite(_code.text.trim());
+    final result = await _service.requestFriend(_code.text.trim());
     if (!mounted) return;
-    Navigator.of(context).pop(groupId);
+    final msg = result == 'accepted'
+        ? 'Vocês já eram pedidos um do outro — amizade criada!'
+        : 'Pedido enviado. Aguarde a aprovação.';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    Navigator.of(context).pop(true);
   });
 
   @override
   Widget build(BuildContext context) {
     final preview = _preview;
     return Scaffold(
-      appBar: AppBar(title: const Text('Entrar com convite')),
+      appBar: AppBar(title: const Text('Adicionar amigo')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppDimens.spaceLg),
@@ -108,33 +111,33 @@ class _JoinInviteScreenState extends State<JoinInviteScreen> {
               enabled: !_busy,
               textCapitalization: TextCapitalization.characters,
               decoration: const InputDecoration(
-                labelText: 'Código do convite',
+                labelText: 'Código do amigo',
                 hintText: 'Ex.: ABCD2345',
               ),
             ),
             const SizedBox(height: 12),
             FilledButton(
               onPressed: _busy ? null : _loadPreview,
-              child: const Text('Ver convite'),
+              child: const Text('Ver perfil'),
             ),
             if (preview != null) ...[
               const SizedBox(height: 24),
-              Text(
-                preview.groupName,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              Text('Convite de ${preview.invitedBy}'),
-              if (preview.memberNames.isNotEmpty)
-                Text(
-                  'No grupo: ${preview.memberNames.join(', ')}',
-                  style: Theme.of(context).textTheme.bodyMedium,
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(
+                  child: Text(
+                    preview.displayName.isEmpty
+                        ? '?'
+                        : preview.displayName[0].toUpperCase(),
+                  ),
                 ),
-              Text(
-                'Válido até ${_formatDate(preview.expiresAt)}',
-                style: Theme.of(context).textTheme.bodySmall,
+                title: Text(
+                  preview.displayName,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                subtitle: const Text('Enviar pedido de amizade'),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Data de nascimento'),
@@ -148,8 +151,8 @@ class _JoinInviteScreenState extends State<JoinInviteScreen> {
               ),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: _busy ? null : _accept,
-                child: const Text('Aceitar e entrar no grupo'),
+                onPressed: _busy ? null : _send,
+                child: const Text('Enviar pedido'),
               ),
             ],
             if (_error != null) ...[

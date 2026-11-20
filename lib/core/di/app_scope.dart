@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import '../../features/invites/services/invite_service.dart';
+import '../../features/friends/services/friend_service.dart';
 import '../../features/radar/services/radar_service.dart';
 import '../location/location_service.dart';
 import '../push/push_service.dart';
@@ -11,14 +11,14 @@ class AppScope extends InheritedWidget {
   const AppScope({
     super.key,
     required this.radarService,
-    required this.inviteService,
+    required this.friendService,
     required this.locationService,
     this.pushService,
     required super.child,
   });
 
   final RadarService radarService;
-  final InviteService inviteService;
+  final FriendService friendService;
   final LocationService locationService;
   final PushService? pushService;
 
@@ -31,7 +31,7 @@ class AppScope extends InheritedWidget {
   @override
   bool updateShouldNotify(AppScope oldWidget) =>
       radarService != oldWidget.radarService ||
-      inviteService != oldWidget.inviteService ||
+      friendService != oldWidget.friendService ||
       locationService != oldWidget.locationService ||
       pushService != oldWidget.pushService;
 }

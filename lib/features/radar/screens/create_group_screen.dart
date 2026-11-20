@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/di/app_scope.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../shared/widgets/error_box.dart';
+import '../../friends/models/friend.dart';
+import '../../friends/services/friend_service.dart';
 import '../controllers/radar_controller.dart';
 import '../models/radar_group.dart';
 
@@ -20,6 +23,38 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   GroupKind _kind = GroupKind.family;
   bool _busy = false;
   String? _error;
+  List<Friend> _friends = const [];
+  final _selected = <String>{};
+  bool _loadingFriends = true;
+
+  bool _friendsStarted = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_friendsStarted) return;
+    _friendsStarted = true;
+    _loadFriends();
+  }
+
+  Future<void> _loadFriends() async {
+    try {
+      final list = await AppScope.of(context).friendService.listFriends();
+      if (mounted) {
+        setState(() {
+          _friends = list.friends;
+          _loadingFriends = false;
+        });
+      }
+    } on Object catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingFriends = false;
+          _error = friendErrorMessage(e);
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -39,7 +74,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       _error = null;
     });
     try {
-      await widget.controller.createGroup(name: _name.text, kind: _kind);
+      await widget.controller.createGroup(
+        name: _name.text,
+        kind: _kind,
+        inviteeIds: _selected.toList(),
+      );
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on Object catch (e) {
@@ -93,6 +132,42 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: AppDimens.spaceMd),
+            Text(
+              'Convidar amigos (opcional)',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: AppDimens.spaceSm),
+            if (_loadingFriends)
+              const Padding(
+                padding: EdgeInsets.all(AppDimens.spaceMd),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_friends.isEmpty)
+              Text(
+                'Você ainda não tem amigos para convidar. '
+                'Crie o grupo e adicione depois.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              )
+            else
+              for (final f in _friends)
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _selected.contains(f.userId),
+                  onChanged: _busy
+                      ? null
+                      : (v) {
+                          setState(() {
+                            if (v == true) {
+                              _selected.add(f.userId);
+                            } else {
+                              _selected.remove(f.userId);
+                            }
+                          });
+                        },
+                  title: Text(f.displayName),
+                  secondary: CircleAvatar(child: Text(f.initial)),
+                ),
             const SizedBox(height: AppDimens.spaceMd),
             FilledButton(
               onPressed: _busy ? null : _submit,

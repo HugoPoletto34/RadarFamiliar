@@ -11,6 +11,9 @@ class PushText {
 
 PushText pushText(String type, Map<String, String> payload) {
   final member = _clean(payload['member_name']);
+  final friend = _clean(payload['friend_name']);
+  final inviter = _clean(payload['invited_by_name']);
+  final group = _clean(payload['group_name']);
   final watcher = _clean(payload['watcher_name']);
   final place = _clean(payload['place_name']);
 
@@ -21,6 +24,25 @@ PushText pushText(String type, Map<String, String> payload) {
         body: member == null
             ? 'Alguém entrou no grupo'
             : '$member entrou no grupo',
+      );
+    case 'friend_request':
+      return PushText(
+        title: 'Pedido de amizade',
+        body: friend == null
+            ? 'Alguém quer ser seu amigo'
+            : '$friend quer ser seu amigo',
+      );
+    case 'friend_accepted':
+      return PushText(
+        title: 'Amizade aceita',
+        body: friend == null
+            ? 'Seu pedido de amizade foi aceito'
+            : '$friend aceitou seu pedido',
+      );
+    case 'group_invite':
+      return PushText(
+        title: 'Convite de grupo',
+        body: _groupInviteBody(inviter, group),
       );
     case 'alert_created_about_you':
       return PushText(
@@ -33,6 +55,15 @@ PushText pushText(String type, Map<String, String> payload) {
         body: _clean(payload['body']) ?? 'Você tem uma nova notificação',
       );
   }
+}
+
+String _groupInviteBody(String? inviter, String? group) {
+  if (inviter != null && group != null) {
+    return '$inviter convidou você para $group';
+  }
+  if (inviter != null) return '$inviter convidou você para um grupo';
+  if (group != null) return 'Você foi convidado para $group';
+  return 'Você recebeu um convite de grupo';
 }
 
 String _alertBody(String? watcher, String? place) {
