@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/theme.dart';
 import '../models/member_location.dart';
 
 /// Resultado da folha: minutos (15 ou 60), [untilOff] ou [stop].
@@ -25,10 +26,28 @@ Future<ShareChoice?> showShareSheet(BuildContext context, SharingState state) {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.spaceLg,
+              0,
+              AppDimens.spaceLg,
+              AppDimens.spaceSm,
+            ),
             child: Text(
               'Compartilhar minha localização com Amigos',
               style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimens.spaceLg,
+              0,
+              AppDimens.spaceLg,
+              AppDimens.spaceSm,
+            ),
+            child: Text(
+              'Com o compartilhamento ligado, sua posição continua '
+              'sendo enviada com o app em segundo plano.',
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
           ListTile(
@@ -59,6 +78,32 @@ Future<ShareChoice?> showShareSheet(BuildContext context, SharingState state) {
       ),
     ),
   );
+}
+
+/// Explicação antes do pedido de "Sempre" no iPhone.
+Future<bool> confirmBackgroundLocation(BuildContext context) async {
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Localização com o app fechado'),
+      content: const Text(
+        'Para o grupo continuar vendo você quando o Radar Familiar '
+        'não está na tela, o iPhone pede a permissão "Sempre". '
+        'A posição só é enviada enquanto o compartilhamento estiver ligado.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Continuar'),
+        ),
+      ],
+    ),
+  );
+  return go == true;
 }
 
 String hhmm(DateTime t) =>
